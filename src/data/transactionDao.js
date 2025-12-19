@@ -24,4 +24,8 @@ export class TransactionDao {
     const all = this.getAll().filter((t) => t.id !== id);
     this.save(all);
   }
+
+  static clear() {
+    this.save([]);
+  }
 }
