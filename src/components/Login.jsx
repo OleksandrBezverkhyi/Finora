@@ -20,10 +20,6 @@ function Login() {
       });
 
       const data = await res.json();
-      if (res.ok) {
-      } else {
-        setError(data.message);
-      }
 
       if (res.ok) {
         if (data.role === 'admin') navigate('/admin');
@@ -31,7 +27,7 @@ function Login() {
       } else {
         setError(data.message);
       }
-    } catch (err) {
+    } catch {
       setError('Помилка сервера');
     }
   };

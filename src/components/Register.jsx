@@ -40,7 +40,7 @@ export default function Register() {
       } else {
         setError(data.message);
       }
-    } catch (err) {
+    } catch {
       setError('Помилка сервера');
     }
   };
