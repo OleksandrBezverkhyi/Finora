@@ -1,0 +1,95 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+
+  categories   Category[]
+  transactions Transaction[]
+  budgets      Budget[]
+  goals        Goal[]
+}
+
+model Category {
+  id        Int          @id @default(autoincrement())
+  userId    Int
+  name      String
+  type      CategoryType
+  createdAt DateTime     @default(now())
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+  budgets      Budget[]
+
+  @@unique([userId, name, type])
+  @@index([userId, type])
+}
+
+model Transaction {
+  id         Int             @id @default(autoincrement())
+  userId     Int
+  categoryId Int
+  type       TransactionType
+  amount     Decimal         @db.Decimal(12, 2)
+  date       DateTime
+  note       String?
+  createdAt  DateTime        @default(now())
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [categoryId], references: [id])
+
+  @@index([userId, date])
+  @@index([categoryId])
+}
+
+model Budget {
+  id           Int      @id @default(autoincrement())
+  userId       Int
+  categoryId   Int?
+  monthStart   DateTime
+  monthlyLimit Decimal  @db.Decimal(12, 2)
+  createdAt    DateTime @default(now())
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category Category? @relation(fields: [categoryId], references: [id])
+
+  @@index([userId, monthStart])
+}
+
+model Goal {
+  id            Int       @id @default(autoincrement())
+  userId        Int
+  name          String
+  targetAmount  Decimal   @db.Decimal(12, 2)
+  currentAmount Decimal   @default(0) @db.Decimal(12, 2)
+  deadline      DateTime?
+  createdAt     DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+enum CategoryType {
+  INCOME
+  EXPENSE
+}
+
+enum TransactionType {
+  INCOME
+  EXPENSE
+}
