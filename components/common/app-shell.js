@@ -1,10 +1,29 @@
 import Link from "next/link";
 
 import Container from "@/components/common/container";
-import { getSessionUser } from "@/lib/session";
 import { signOut } from "@/lib/auth";
+import { getSessionUser } from "@/lib/session";
 
-const upcomingItems = ["Transactions", "Categories", "Analytics"];
+const navItems = [
+  {
+    href: "/dashboard",
+    label: "Dashboard",
+    active: true,
+  },
+  {
+    href: "/categories",
+    label: "Categories",
+    active: true,
+  },
+  {
+    label: "Transactions",
+    active: false,
+  },
+  {
+    label: "Analytics",
+    active: false,
+  },
+];
 
 async function handleSignOut() {
   "use server";
@@ -34,20 +53,24 @@ export default async function AppShell({ children }) {
 
             <div className="flex flex-col gap-3 lg:items-end">
               <nav className="flex flex-wrap gap-2">
-                <Link
-                  href="/dashboard"
-                  className="rounded-full border border-[var(--accent)] bg-[var(--accent-soft)] px-4 py-2 text-sm font-medium text-[var(--accent-strong)]"
-                >
-                  Dashboard
-                </Link>
-                {upcomingItems.map((item) => (
-                  <span
-                    key={item}
-                    className="rounded-full border border-[var(--border)] bg-white/55 px-4 py-2 text-sm font-medium text-[var(--muted)]"
-                  >
-                    {item}
-                  </span>
-                ))}
+                {navItems.map((item) =>
+                  item.active ? (
+                    <Link
+                      key={item.label}
+                      href={item.href}
+                      className="rounded-full border border-[var(--accent)] bg-[var(--accent-soft)] px-4 py-2 text-sm font-medium text-[var(--accent-strong)] transition hover:bg-[var(--accent)] hover:text-white"
+                    >
+                      {item.label}
+                    </Link>
+                  ) : (
+                    <span
+                      key={item.label}
+                      className="rounded-full border border-[var(--border)] bg-white/55 px-4 py-2 text-sm font-medium text-[var(--muted)]"
+                    >
+                      {item.label}
+                    </span>
+                  )
+                )}
               </nav>
 
               <form action={handleSignOut}>
