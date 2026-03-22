@@ -1,4 +1,9 @@
-export default function DashboardPage() {
+import { requireSession } from "@/lib/session";
+
+export default async function DashboardPage() {
+  const session = await requireSession();
+  const userName = session.user.name || session.user.email || "User";
+
   return (
     <div className="space-y-8">
       <section className="glass-panel rounded-[2rem] p-6 sm:p-8">
@@ -6,11 +11,11 @@ export default function DashboardPage() {
           <div className="space-y-3">
             <p className="eyebrow">Dashboard</p>
             <h1 className="page-title max-w-2xl text-[var(--foreground)]">
-              Financial snapshot for the product shell.
+              {`Welcome back, ${userName}.`}
             </h1>
             <p className="muted max-w-2xl text-sm leading-6 sm:text-base">
-              This protected page is a placeholder for period filters, summary cards, recent
-              transactions, and recommendation widgets.
+              This protected page is already behind Auth.js middleware and server-side session
+              checks. The next step is wiring real finance widgets and transaction data.
             </p>
           </div>
 
@@ -24,12 +29,12 @@ export default function DashboardPage() {
         <div className="grid gap-5 sm:grid-cols-2">
           <div className="glass-panel rounded-[1.75rem] p-6">
             <p className="text-sm font-medium text-[var(--muted)]">Income</p>
-            <p className="mt-6 text-4xl font-semibold tracking-tight">$0.00</p>
+            <p className="mt-6 text-4xl font-semibold tracking-tight">₴0.00</p>
             <p className="mt-3 text-sm text-[var(--muted)]">Summary card placeholder</p>
           </div>
           <div className="glass-panel rounded-[1.75rem] p-6">
             <p className="text-sm font-medium text-[var(--muted)]">Expenses</p>
-            <p className="mt-6 text-4xl font-semibold tracking-tight">$0.00</p>
+            <p className="mt-6 text-4xl font-semibold tracking-tight">₴0.00</p>
             <p className="mt-3 text-sm text-[var(--muted)]">Summary card placeholder</p>
           </div>
           <div className="glass-panel rounded-[1.75rem] p-6 sm:col-span-2">
