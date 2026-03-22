@@ -11,13 +11,14 @@ const navItems = [
     active: true,
   },
   {
-    href: "/categories",
-    label: "Categories",
+    href: "/transactions",
+    label: "Transactions",
     active: true,
   },
   {
-    label: "Transactions",
-    active: false,
+    href: "/categories",
+    label: "Categories",
+    active: true,
   },
   {
     label: "Analytics",
