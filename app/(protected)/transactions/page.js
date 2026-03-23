@@ -59,7 +59,8 @@ export default async function TransactionsPage() {
               Add records, search history, and inspect spending without leaving one screen.
             </h1>
             <p className="muted max-w-2xl text-sm leading-6 sm:text-base">
-              This screen uses the transactions API for create, filter, sorting, and pagination.
+              Record each operation, quickly find past entries, and understand where your money
+              goes over time.
             </p>
           </div>
 

@@ -163,7 +163,8 @@ export default function CategoriesManager({ initialCategories }) {
             {editingId ? "Update current category" : "Create a new category"}
           </h2>
           <p className="muted text-sm leading-6">
-            Categories belong to the signed-in user automatically. The client never sends `userId`.
+            Use simple, recognizable category names so your reports and transaction history stay
+            easy to read.
           </p>
         </div>
 
@@ -271,7 +272,7 @@ export default function CategoriesManager({ initialCategories }) {
             <div className="mt-6 space-y-3">
               {groupedCategories[section.value].length === 0 ? (
                 <div className="rounded-2xl border border-dashed border-[var(--border)] px-4 py-5 text-sm text-[var(--muted)]">
-                  No categories in this group yet.
+                  You have not added any categories in this section yet.
                 </div>
               ) : (
                 groupedCategories[section.value].map((category) => (
@@ -288,7 +289,7 @@ export default function CategoriesManager({ initialCategories }) {
                         <div>
                           <p className="font-semibold text-[var(--foreground)]">{category.name}</p>
                           <p className="mt-1 text-sm text-[var(--muted)]">
-                            {category.color || "Default Finora color"}
+                            {category.color || "Standard category color"}
                           </p>
                         </div>
                       </div>
