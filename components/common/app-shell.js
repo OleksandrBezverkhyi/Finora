@@ -44,7 +44,9 @@ export default async function AppShell({ children }) {
               <Link href="/dashboard" className="text-xl font-semibold tracking-tight">
                 Finora
               </Link>
-              <p className="muted mt-1 text-sm">Personal finance dashboard shell</p>
+              <p className="muted mt-1 text-sm">
+                Personal finance planner for everyday spending and savings
+              </p>
               {user ? (
                 <p className="mt-2 text-sm font-medium text-[var(--foreground)]/75">
                   {user.name || user.email}

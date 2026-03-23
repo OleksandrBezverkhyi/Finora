@@ -232,15 +232,18 @@ export default function TransactionsManager({
               Create income and expense records
             </h2>
             <p className="muted text-sm leading-6">
-              Pick one of your categories and record the amount in hryvnia.
+              Add each operation as soon as it happens to keep your balance and reports accurate.
             </p>
           </div>
 
           {categories.length === 0 ? (
             <div className="mt-8 rounded-2xl border border-dashed border-[var(--border)] px-4 py-5">
-              <p className="font-medium text-[var(--foreground)]">You need categories first.</p>
+              <p className="font-medium text-[var(--foreground)]">
+                Add categories before creating your first transaction.
+              </p>
               <p className="muted mt-2 text-sm leading-6">
-                Create at least one income or expense category before adding transactions.
+                Start with a few categories for income and expenses, then come back here to record
+                your operations.
               </p>
               <Link
                 href="/categories"
@@ -364,7 +367,7 @@ export default function TransactionsManager({
               Search your history
             </h2>
             <p className="muted text-sm leading-6">
-              Filter by period, type, category, amount range, and search by comment or category.
+              Narrow the list by period, type, category, amount, or a quick keyword search.
             </p>
           </div>
 
@@ -548,7 +551,7 @@ export default function TransactionsManager({
               Transactions list
             </h2>
             <p className="muted text-sm leading-6">
-              Showing page {pagination.page} of {pagination.totalPages}. Total records:{" "}
+              Showing page {pagination.page} of {pagination.totalPages}. Total entries:{" "}
               {pagination.total}.
             </p>
           </div>
@@ -582,7 +585,7 @@ export default function TransactionsManager({
                     colSpan="5"
                     className="rounded-2xl border border-dashed border-[var(--border)] px-4 py-10 text-center text-sm text-[var(--muted)]"
                   >
-                    No transactions found for the selected filters.
+                    No transactions match the selected filters yet.
                   </td>
                 </tr>
               ) : (

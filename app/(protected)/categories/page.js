@@ -30,8 +30,8 @@ export default async function CategoriesPage() {
               Organize income and expense groups before adding transactions.
             </h1>
             <p className="muted max-w-2xl text-sm leading-6 sm:text-base">
-              This page uses session-based API routes. Category records are filtered by the
-              current account automatically.
+              Keep your records tidy by grouping transactions into clear income and expense
+              categories that match your everyday spending.
             </p>
           </div>
 

@@ -87,11 +87,11 @@ export default function DashboardOverview({ initialSummary }) {
           <div className="space-y-3">
             <p className="eyebrow">Overview</p>
             <h2 className="text-3xl font-semibold tracking-tight text-[var(--foreground)]">
-              Summary for the selected period
+              Your financial picture at a glance
             </h2>
             <p className="muted max-w-2xl text-sm leading-6">
-              Income, expenses, balance, top expense categories, and recent transactions update
-              from the analytics summary endpoint.
+              Review income, expenses, balance, spending categories, and your latest activity for
+              any period you choose.
             </p>
           </div>
 
@@ -158,12 +158,12 @@ export default function DashboardOverview({ initialSummary }) {
           <SummaryCard
             label="Income"
             value={formatMoney(summary.totals.income)}
-            hint="Total recorded income in the selected period"
+            hint="Money received during the selected period"
           />
           <SummaryCard
             label="Expenses"
             value={formatMoney(summary.totals.expense)}
-            hint="Total recorded expenses in the selected period"
+            hint="Money spent during the selected period"
           />
           <div className="glass-panel rounded-[1.75rem] p-6 sm:col-span-2">
             <p className="text-sm font-medium text-[var(--muted)]">Balance</p>
@@ -181,7 +181,7 @@ export default function DashboardOverview({ initialSummary }) {
           <div className="mt-6 space-y-4">
             {summary.topExpenseCategories.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-[var(--border)] px-4 py-5 text-sm text-[var(--muted)]">
-                No expense activity in the selected period.
+                No expense categories to show for this period yet.
               </div>
             ) : (
               summary.topExpenseCategories.map((category, index) => (
@@ -212,7 +212,7 @@ export default function DashboardOverview({ initialSummary }) {
           <div>
             <p className="text-sm font-medium text-[var(--muted)]">Recent transactions</p>
             <p className="mt-2 text-sm text-[var(--muted)]">
-              Latest entries inside the selected period.
+              Your latest recorded income and expense operations.
             </p>
           </div>
           <span className="rounded-full border border-[var(--border)] bg-white/80 px-3 py-1 text-sm font-medium text-[var(--foreground)]">
@@ -223,7 +223,7 @@ export default function DashboardOverview({ initialSummary }) {
         <div className="mt-6 space-y-3">
           {summary.recentTransactions.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-[var(--border)] px-4 py-5 text-sm text-[var(--muted)]">
-              No transactions recorded in this period yet.
+              There are no transactions in this period yet.
             </div>
           ) : (
             summary.recentTransactions.map((transaction) => (

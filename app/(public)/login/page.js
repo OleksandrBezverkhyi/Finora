@@ -50,23 +50,23 @@ export default async function LoginPage({ searchParams }) {
               Track income and spending with a cleaner daily workflow.
             </h1>
             <p className="max-w-md text-sm leading-6 text-white/78 sm:text-base">
-              Credentials auth is now wired through Auth.js. You can create a new account from the
-              register screen and then continue to the protected dashboard.
+              Stay on top of your budget, follow daily expenses, and keep every financial decision
+              in one organized space.
             </p>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-3">
             <div className="rounded-2xl border border-white/16 bg-white/10 p-4">
-              <p className="text-xs uppercase tracking-[0.18em] text-white/60">Auth</p>
-              <p className="mt-3 text-2xl font-semibold">Ready</p>
+              <p className="text-xs uppercase tracking-[0.18em] text-white/60">Overview</p>
+              <p className="mt-3 text-2xl font-semibold">Income</p>
             </div>
             <div className="rounded-2xl border border-white/16 bg-white/10 p-4">
-              <p className="text-xs uppercase tracking-[0.18em] text-white/60">Session</p>
-              <p className="mt-3 text-2xl font-semibold">JWT</p>
+              <p className="text-xs uppercase tracking-[0.18em] text-white/60">Planning</p>
+              <p className="mt-3 text-2xl font-semibold">Budget</p>
             </div>
             <div className="rounded-2xl border border-white/16 bg-white/10 p-4">
-              <p className="text-xs uppercase tracking-[0.18em] text-white/60">Route guard</p>
-              <p className="mt-3 text-2xl font-semibold">On</p>
+              <p className="text-xs uppercase tracking-[0.18em] text-white/60">Control</p>
+              <p className="mt-3 text-2xl font-semibold">Balance</p>
             </div>
           </div>
         </div>
@@ -79,7 +79,7 @@ export default async function LoginPage({ searchParams }) {
                 Welcome back
               </h2>
               <p className="muted max-w-md text-sm leading-6">
-                Sign in with the email and password already stored in your local database.
+                Sign in to review your finances, recent transactions, and current balance.
               </p>
             </div>
 
@@ -146,7 +146,7 @@ export default async function LoginPage({ searchParams }) {
             <div className="rounded-2xl border border-dashed border-[var(--border)] px-4 py-4">
               <p className="text-sm font-medium text-[var(--foreground)]">No account yet?</p>
               <p className="muted mt-2 text-sm leading-6">
-                Open the register page, create an account, then come back here to sign in.
+                Create an account in a few steps and start keeping your personal finances in order.
               </p>
             </div>
           </div>

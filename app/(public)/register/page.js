@@ -14,8 +14,8 @@ export default async function RegisterPage({ searchParams }) {
               Create your workspace before budgeting, analytics, and planning kick in.
             </h1>
             <p className="max-w-md text-sm leading-6 text-white/78 sm:text-base">
-              This page calls the existing register API, validates the payload, and returns you to
-              login after successful account creation.
+              Create your account once and start tracking income, expenses, savings goals, and
+              monthly habits in one place.
             </p>
           </div>
 
@@ -43,8 +43,8 @@ export default async function RegisterPage({ searchParams }) {
                 Create your account
               </h2>
               <p className="muted max-w-md text-sm leading-6">
-                Fill in the fields below. After a successful signup you will return to the login
-                screen and can sign in immediately. New accounts use hryvnia by default.
+                Fill in your details to create a personal space for daily financial tracking. All
+                amounts in the app are recorded in hryvnia by default.
               </p>
             </div>
 
