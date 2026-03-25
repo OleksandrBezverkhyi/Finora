@@ -5,7 +5,15 @@ const eslintConfig = defineConfig([
   ...nextVitals,
   {
     rules: {
+      curly: ["error", "all"],
+      eqeqeq: ["error", "always"],
+      "max-lines": ["warn", { max: 220, skipBlankLines: true, skipComments: true }],
+      "max-lines-per-function": ["warn", { max: 80, skipBlankLines: true, skipComments: true }],
+      "no-console": "warn",
       "no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
+      "object-shorthand": ["warn", "always"],
+      "prefer-const": "warn",
+      "prefer-template": "warn",
     },
   },
   // Override default ignores of eslint-config-next.

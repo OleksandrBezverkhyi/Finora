@@ -81,8 +81,6 @@ export async function POST(request) {
       );
     }
 
-    console.error("Create category failed", error);
-
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

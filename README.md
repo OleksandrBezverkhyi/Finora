@@ -16,3 +16,13 @@ Web-Oriented Information System for Personal Income and Expense Tracking
 npm install
 npm run dev
 ```
+
+## Code quality
+
+```bash
+npm run check
+```
+
+This command runs formatting validation, ESLint, and static type checking.
+
+Pre-commit checks are configured through Husky and lint-staged.

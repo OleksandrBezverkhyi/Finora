@@ -77,3 +77,77 @@ To automatically format files with Prettier, use:
 ```bash
 npm run format
 ```
+
+## Git hooks
+
+The project uses **Husky** together with **lint-staged** to run checks before each commit.
+
+The Git hook is stored in:
+
+- [.husky/pre-commit](../.husky/pre-commit)
+
+During `pre-commit`, only staged files are checked:
+
+- `eslint --max-warnings=0 --fix` for `*.js` and `*.mjs`
+- `prettier --write` for staged source and documentation files
+
+This setup helps prevent commits that contain lint warnings or unformatted code.
+
+If dependencies have just been installed, the hooks are activated by:
+
+```bash
+npm run prepare
+```
+
+## Integration with the build process
+
+Linting and static checks are integrated into the build script.
+
+The `build` script now runs:
+
+```bash
+npm run check && next build
+```
+
+This means that before the production build starts, the project performs:
+
+1. Prettier validation
+2. ESLint validation
+3. TypeScript-based static type checking
+
+The combined verification command is:
+
+```bash
+npm run check
+```
+
+This command is useful both locally and in CI pipelines.
+
+## Static typing
+
+Although the project is written in **JavaScript**, static type checking is enabled through
+**TypeScript**.
+
+The TypeScript configuration is stored in:
+
+- [tsconfig.json](../tsconfig.json)
+
+The configuration uses:
+
+- `allowJs: true` to include JavaScript files
+- `checkJs: true` to enable type analysis for JavaScript
+- `noEmit: true` so that TypeScript only validates the code and does not generate output files
+
+Static type checking is executed with:
+
+```bash
+npm run typecheck
+```
+
+This runs:
+
+```bash
+tsc --noEmit
+```
+
+As a result, the project now has an additional validation layer beyond linting and formatting.
