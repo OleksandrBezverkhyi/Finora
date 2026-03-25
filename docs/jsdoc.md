@@ -31,8 +31,6 @@ Generated output is written to:
 
 - `generated-docs/jsdoc/`
 
-This directory is ignored by Git because it is build output.
-
 ## Command
 
 To generate documentation, run:
@@ -45,6 +43,20 @@ This command executes:
 
 ```bash
 jsdoc -c jsdoc.config.json
+```
+
+## Quality and executable examples
+
+Documentation quality can be verified with:
+
+```bash
+npm run docs:check
+```
+
+Executable documentation examples can be run with:
+
+```bash
+npm run docs:test
 ```
 
 ## Documentation standard

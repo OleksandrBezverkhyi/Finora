@@ -63,3 +63,5 @@ zip -r jsdoc-documentation.zip generated-docs/jsdoc
 
 - Documentation is generated only when the command is run explicitly.
 - If source comments were changed, regenerate the documentation before submission or commit.
+- To validate documentation quality before generation, run `npm run docs:check`.
+- To run executable documentation examples, run `npm run docs:test`.

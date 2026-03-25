@@ -49,6 +49,33 @@ The generator configuration is stored in:
 Additional details are described in:
 
 - `docs/jsdoc.md`
+- `docs/generate_docs.md`
+
+## Documentation quality
+
+The project includes a dedicated documentation quality check:
+
+```bash
+npm run docs:check
+```
+
+This command verifies that:
+
+- public exports are documented with JSDoc
+- required project documentation files exist
+- executable documentation tests are present
+
+Executable documentation examples can be run with:
+
+```bash
+npm run docs:test
+```
+
+To run both documentation checks together:
+
+```bash
+npm run docs:verify
+```
 
 ## Documentation rules
 
@@ -84,6 +111,13 @@ All contributors should follow the same documentation approach to keep the proje
 - Update `README.md` when setup, scripts, workflow, or contribution rules change
 - Update files in `docs/` when linting, hooks, build checks, or other engineering processes change
 - If a new module introduces its own conventions, document them in `docs/` as a separate file
+
+### Technical documentation map
+
+- `docs/architecture.md` describes the system structure and main technical decisions
+- `docs/business-logic.md` describes domain rules and important algorithms
+- `docs/component-interactions.md` describes how pages, components, hooks, and APIs work together
+- `docs/test-driven-documentation.md` explains executable documentation through tests
 
 ### Expected standard for contributors
 
