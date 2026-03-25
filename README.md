@@ -27,6 +27,30 @@ This command runs formatting validation, ESLint, and static type checking.
 
 Pre-commit checks are configured through Husky and lint-staged.
 
+## Documentation generation
+
+The project uses **JSDoc** to generate documentation directly from documented source code.
+
+To generate documentation:
+
+```bash
+npm run docs:generate
+```
+
+Generated HTML documentation is written to:
+
+```bash
+generated-docs/jsdoc
+```
+
+The generator configuration is stored in:
+
+- `jsdoc.config.json`
+
+Additional details are described in:
+
+- `docs/jsdoc.md`
+
 ## Documentation rules
 
 All contributors should follow the same documentation approach to keep the project consistent.

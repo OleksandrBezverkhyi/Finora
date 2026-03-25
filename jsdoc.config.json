@@ -1,0 +1,18 @@
+{
+  "source": {
+    "include": ["app", "components", "lib", "middleware.js"],
+    "includePattern": ".+\\.js$",
+    "exclude": ["node_modules", ".next", "out", "build", "generated-docs"]
+  },
+  "opts": {
+    "destination": "./generated-docs/jsdoc",
+    "recurse": true,
+    "readme": "./README.md"
+  },
+  "plugins": ["plugins/markdown"],
+  "templates": {
+    "default": {
+      "includeDate": false
+    }
+  }
+}
