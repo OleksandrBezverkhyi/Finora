@@ -2,6 +2,21 @@
 
 import { formatPeriodLabel } from "@/components/dashboard/dashboard-formatters";
 
+/**
+ * Period selector and custom range controls for the dashboard summary.
+ *
+ * @param {{
+ *   customRange: { from: string, to: string },
+ *   isLoading: boolean,
+ *   onApply: () => void,
+ *   onPeriodSelect: (period: string) => void,
+ *   onRangeChange: (event: Event) => void,
+ *   periodOptions: Array<{ value: string, label: string }>,
+ *   selectedPeriod: string,
+ *   summaryPeriod: { from?: string | null, to?: string | null }
+ * }} props
+ * @returns {import("react").JSX.Element}
+ */
 export default function DashboardPeriodControls({
   customRange,
   isLoading,

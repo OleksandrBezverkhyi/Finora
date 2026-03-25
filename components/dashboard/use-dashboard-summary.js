@@ -21,6 +21,21 @@ function createSummaryParams({ period, from, to }) {
   return params;
 }
 
+/**
+ * Client hook that manages dashboard summary loading, period switching, and custom date ranges.
+ *
+ * @param {Record<string, any>} initialSummary
+ * @returns {{
+ *   applyCustomRange: () => Promise<void>,
+ *   customRange: { from: string, to: string },
+ *   error: string,
+ *   handlePeriodSelect: (nextPeriod: string) => Promise<void>,
+ *   handleRangeChange: (event: Event) => void,
+ *   isLoading: boolean,
+ *   selectedPeriod: string,
+ *   summary: Record<string, any>
+ * }}
+ */
 export default function useDashboardSummary(initialSummary) {
   const [selectedPeriod, setSelectedPeriod] = useState(initialSummary.period.type || "month");
   const [customRange, setCustomRange] = useState({
@@ -36,7 +51,9 @@ export default function useDashboardSummary(initialSummary) {
     setError("");
 
     try {
-      const response = await fetch(`/api/analytics/summary?${createSummaryParams({ period, from, to }).toString()}`);
+      const response = await fetch(
+        `/api/analytics/summary?${createSummaryParams({ period, from, to }).toString()}`
+      );
       const data = await response.json();
 
       if (!response.ok) {

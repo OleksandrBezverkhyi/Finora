@@ -10,8 +10,8 @@ function DashboardHero({ userName }) {
           <p className="eyebrow">Dashboard</p>
           <h1 className="page-title max-w-2xl text-[var(--foreground)]">{`Welcome back, ${userName}.`}</h1>
           <p className="muted max-w-2xl text-sm leading-6 sm:text-base">
-            Keep your finances under control with a clear overview of income, expenses, balance,
-            and your latest transactions.
+            Keep your finances under control with a clear overview of income, expenses, balance, and
+            your latest transactions.
           </p>
         </div>
       </div>
@@ -19,6 +19,11 @@ function DashboardHero({ userName }) {
   );
 }
 
+/**
+ * Protected dashboard page that loads the initial monthly summary for the signed-in user.
+ *
+ * @returns {Promise<import("react").JSX.Element>}
+ */
 export default async function DashboardPage() {
   const session = await requireSession();
   const userName = session.user.name || session.user.email || "User";

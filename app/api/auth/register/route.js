@@ -7,6 +7,12 @@ import { registerSchema } from "@/lib/validators";
 
 const SALT_ROUNDS = 12;
 
+/**
+ * Creates a new user account after validating the request body and hashing the password.
+ *
+ * @param {Request} request
+ * @returns {Promise<import("next/server").NextResponse>}
+ */
 export async function POST(request) {
   try {
     const body = await request.json();

@@ -2,6 +2,12 @@
 
 import { formatDate, formatMoney } from "@/components/dashboard/dashboard-formatters";
 
+/**
+ * Displays the latest transactions for the selected dashboard period.
+ *
+ * @param {{ transactions: Array<Record<string, any>> }} props
+ * @returns {import("react").JSX.Element}
+ */
 export default function DashboardRecentTransactions({ transactions }) {
   return (
     <section className="glass-panel rounded-[1.75rem] p-6">
@@ -34,7 +40,9 @@ export default function DashboardRecentTransactions({ transactions }) {
                   style={{ backgroundColor: transaction.category.color || "#0F766E" }}
                 />
                 <div>
-                  <p className="font-medium text-[var(--foreground)]">{transaction.category.name}</p>
+                  <p className="font-medium text-[var(--foreground)]">
+                    {transaction.category.name}
+                  </p>
                   <p className="mt-1 text-sm text-[var(--muted)]">
                     {transaction.comment || "No comment"}
                   </p>

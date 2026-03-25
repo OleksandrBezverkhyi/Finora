@@ -81,6 +81,18 @@ function CategorySection({ categories, deletingId, label, onDelete, onEdit }) {
   );
 }
 
+/**
+ * Displays grouped category lists with edit and delete actions for each category type.
+ *
+ * @param {{
+ *   deletingId: string | null,
+ *   groupedCategories: Record<string, Array<Record<string, unknown>>>,
+ *   typeOptions: Array<{ value: string, label: string }>,
+ *   onDelete: (categoryId: string) => void,
+ *   onEdit: (category: Record<string, unknown>) => void
+ * }} props
+ * @returns {import("react").JSX.Element}
+ */
 export default function CategorySections({
   deletingId,
   groupedCategories,

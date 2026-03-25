@@ -1,5 +1,11 @@
 import RegisterForm from "@/components/auth/register-form";
 
+/**
+ * Registration page that prepares the callback URL and renders the account creation form.
+ *
+ * @param {{ searchParams: Promise<Record<string, string | string[] | undefined>> }} props
+ * @returns {Promise<import("react").JSX.Element>}
+ */
 export default async function RegisterPage({ searchParams }) {
   const params = await searchParams;
   const callbackUrl = params?.callbackUrl || "/dashboard";

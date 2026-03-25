@@ -1,3 +1,15 @@
+/**
+ * Reusable authentication form field wrapper with label and inline error rendering.
+ *
+ * @param {{
+ *   label: string,
+ *   error?: string,
+ *   as?: keyof import("react").JSX.IntrinsicElements,
+ *   className?: string,
+ *   children?: import("react").ReactNode
+ * }} props
+ * @returns {import("react").JSX.Element}
+ */
 export default function AuthField({
   label,
   error,

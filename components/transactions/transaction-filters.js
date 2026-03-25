@@ -39,6 +39,19 @@ function TransactionFilterActions({ isLoading, onApply, onReset }) {
   );
 }
 
+/**
+ * Filter panel for the transactions page.
+ *
+ * @param {{
+ *   filterCategories: Array<Record<string, unknown>>,
+ *   filters: Record<string, string>,
+ *   isLoading: boolean,
+ *   onApply: () => void,
+ *   onChange: (event: Event) => void,
+ *   onReset: () => void
+ * }} props
+ * @returns {import("react").JSX.Element}
+ */
 export default function TransactionFilters({
   filterCategories,
   filters,

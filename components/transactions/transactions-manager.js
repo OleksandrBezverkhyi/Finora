@@ -5,6 +5,16 @@ import TransactionForm from "@/components/transactions/transaction-form";
 import TransactionHistory from "@/components/transactions/transaction-history";
 import useTransactionsManager from "@/components/transactions/use-transactions-manager";
 
+/**
+ * Orchestrates transaction form state, filters, list loading, and pagination.
+ *
+ * @param {{
+ *   categories: Array<Record<string, unknown>>,
+ *   initialTransactions: Array<Record<string, unknown>>,
+ *   initialPagination: Record<string, number>
+ * }} props
+ * @returns {import("react").JSX.Element}
+ */
 export default function TransactionsManager({
   categories,
   initialTransactions,

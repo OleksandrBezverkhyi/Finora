@@ -23,6 +23,13 @@ async function getOwnedCategoryId(id, userId) {
   return category?.id ?? null;
 }
 
+/**
+ * Updates an existing category owned by the authenticated user.
+ *
+ * @param {Request} request
+ * @param {{ params: Promise<{ id: string }> }} context
+ * @returns {Promise<import("next/server").NextResponse>}
+ */
 export async function PUT(request, { params }) {
   const user = await getSessionUser();
 
@@ -81,6 +88,13 @@ export async function PUT(request, { params }) {
   }
 }
 
+/**
+ * Deletes an existing category owned by the authenticated user.
+ *
+ * @param {Request} _request
+ * @param {{ params: Promise<{ id: string }> }} context
+ * @returns {Promise<import("next/server").NextResponse>}
+ */
 export async function DELETE(_request, { params }) {
   const user = await getSessionUser();
 

@@ -19,6 +19,13 @@ function isProtectedPath(pathname) {
   );
 }
 
+/**
+ * Route middleware that restricts protected pages to authenticated users
+ * and prevents authenticated users from revisiting login and registration pages.
+ *
+ * @param {import("next/server").NextRequest} request
+ * @returns {Promise<import("next/server").NextResponse>}
+ */
 export async function middleware(request) {
   const { pathname, search } = request.nextUrl;
   const token = await getToken({ req: request, secret: process.env.AUTH_SECRET });
@@ -38,6 +45,9 @@ export async function middleware(request) {
   return NextResponse.next();
 }
 
+/**
+ * Route matching rules for the authentication middleware.
+ */
 export const config = {
   matcher: [
     "/login",

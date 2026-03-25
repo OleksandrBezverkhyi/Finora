@@ -1,6 +1,10 @@
 "use client";
 
-import { formatDate, formatMoney, getVisiblePages } from "@/components/transactions/transaction-utils";
+import {
+  formatDate,
+  formatMoney,
+  getVisiblePages,
+} from "@/components/transactions/transaction-utils";
 
 function TransactionRow({ transaction }) {
   return (
@@ -28,7 +32,9 @@ function TransactionRow({ transaction }) {
           <span className="font-medium text-[var(--foreground)]">{transaction.category.name}</span>
         </div>
       </td>
-      <td className="px-4 py-4 text-sm text-[var(--muted)]">{transaction.comment || "No comment"}</td>
+      <td className="px-4 py-4 text-sm text-[var(--muted)]">
+        {transaction.comment || "No comment"}
+      </td>
       <td className="rounded-r-2xl px-4 py-4 text-sm font-semibold text-[var(--foreground)]">
         {formatMoney(transaction.amount)}
       </td>
@@ -82,6 +88,18 @@ function TransactionPagination({ fetchTransactions, isLoading, pagination }) {
   );
 }
 
+/**
+ * Paginated transaction history table.
+ *
+ * @param {{
+ *   fetchTransactions: (page?: number) => Promise<void>,
+ *   isLoading: boolean,
+ *   listError: string,
+ *   pagination: { page: number, totalPages: number, total: number },
+ *   transactions: Array<Record<string, any>>
+ * }} props
+ * @returns {import("react").JSX.Element}
+ */
 export default function TransactionHistory({
   fetchTransactions,
   isLoading,

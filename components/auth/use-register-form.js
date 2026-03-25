@@ -29,6 +29,17 @@ function buildLoginRedirectUrl(email, callbackUrl) {
   return `${loginUrl.pathname}${loginUrl.search}`;
 }
 
+/**
+ * Client hook that manages registration form submission, validation errors, and redirect on success.
+ *
+ * @param {string} callbackUrl
+ * @returns {{
+ *   fieldErrors: Record<string, string[]>,
+ *   formError: string,
+ *   handleSubmit: (event: SubmitEvent) => Promise<void>,
+ *   isSubmitting: boolean
+ * }}
+ */
 export default function useRegisterForm(callbackUrl) {
   const router = useRouter();
   const [fieldErrors, setFieldErrors] = useState(initialFieldErrors);

@@ -1,3 +1,14 @@
+/**
+ * Decorative marketing panel used on authentication pages.
+ *
+ * @param {{
+ *   gradientClassName: string,
+ *   title: string,
+ *   description: string,
+ *   cards: Array<{ eyebrow: string, value: string }>
+ * }} props
+ * @returns {import("react").JSX.Element}
+ */
 export default function AuthShowcase({ gradientClassName, title, description, cards }) {
   return (
     <div

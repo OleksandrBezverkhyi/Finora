@@ -184,6 +184,21 @@ function TransactionDetailFields({ fieldErrors, formData, onChange }) {
   );
 }
 
+/**
+ * Transaction creation form used for adding new income and expense records.
+ *
+ * @param {{
+ *   categories: Array<Record<string, unknown>>,
+ *   fieldErrors: Record<string, string[]>,
+ *   formData: Record<string, any>,
+ *   formError: string,
+ *   formCategories: Array<Record<string, unknown>>,
+ *   isSubmitting: boolean,
+ *   onChange: (event: Event) => void,
+ *   onSubmit: (event: SubmitEvent) => Promise<void>
+ * }} props
+ * @returns {import("react").JSX.Element}
+ */
 export default function TransactionForm({
   categories,
   fieldErrors,

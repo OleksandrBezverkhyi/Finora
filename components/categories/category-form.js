@@ -152,6 +152,22 @@ function CategoryColorField({ color, error, onInputChange }) {
   );
 }
 
+/**
+ * Form panel used for creating and editing user categories.
+ *
+ * @param {{
+ *   editingId: string | null,
+ *   formData: Record<string, any>,
+ *   fieldErrors: Record<string, string[]>,
+ *   formError: string,
+ *   isSubmitting: boolean,
+ *   typeOptions: Array<{ value: string, label: string }>,
+ *   onInputChange: (event: Event) => void,
+ *   onSubmit: (event: SubmitEvent) => Promise<void>,
+ *   onReset: () => void
+ * }} props
+ * @returns {import("react").JSX.Element}
+ */
 export default function CategoryForm({
   editingId,
   formData,

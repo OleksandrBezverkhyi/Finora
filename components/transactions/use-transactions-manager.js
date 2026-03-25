@@ -43,13 +43,21 @@ function createSearchParams(nextFilters, nextPage) {
   return params;
 }
 
-function createFetchTransactions({ filters, setIsLoading, setListError, setPagination, setTransactions }) {
+function createFetchTransactions({
+  filters,
+  setIsLoading,
+  setListError,
+  setPagination,
+  setTransactions,
+}) {
   return async function fetchTransactions(nextPage = 1, nextFilters = filters) {
     setIsLoading(true);
     setListError("");
 
     try {
-      const response = await fetch(`/api/transactions?${createSearchParams(nextFilters, nextPage).toString()}`);
+      const response = await fetch(
+        `/api/transactions?${createSearchParams(nextFilters, nextPage).toString()}`
+      );
       const data = await response.json();
 
       if (!response.ok) {
@@ -147,6 +155,34 @@ function createFilterChangeHandler(categories, setFilters) {
   };
 }
 
+/**
+ * Client hook that manages transaction creation, filtering, list refresh, and pagination state.
+ *
+ * @param {{
+ *   categories: Array<Record<string, any>>,
+ *   initialPagination: Record<string, number>,
+ *   initialTransactions: Array<Record<string, any>>
+ * }} params
+ * @returns {{
+ *   applyFilters: () => Promise<void>,
+ *   fetchTransactions: (nextPage?: number, nextFilters?: Record<string, string>) => Promise<void>,
+ *   fieldErrors: Record<string, string[]>,
+ *   filterCategories: Array<Record<string, any>>,
+ *   filters: Record<string, string>,
+ *   formCategories: Array<Record<string, any>>,
+ *   formData: Record<string, any>,
+ *   formError: string,
+ *   handleCreateTransaction: (event: SubmitEvent) => Promise<void>,
+ *   handleFilterChange: (event: Event) => void,
+ *   handleFormChange: (event: Event) => void,
+ *   isLoading: boolean,
+ *   isSubmitting: boolean,
+ *   listError: string,
+ *   pagination: Record<string, number>,
+ *   resetFilters: () => Promise<void>,
+ *   transactions: Array<Record<string, any>>
+ * }}
+ */
 export default function useTransactionsManager({
   categories,
   initialPagination,

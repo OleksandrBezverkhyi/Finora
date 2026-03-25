@@ -2,6 +2,11 @@ import CategoriesManager from "@/components/categories/categories-manager";
 import prisma from "@/lib/prisma";
 import { requireSession } from "@/lib/session";
 
+/**
+ * Protected categories page that loads user categories and passes them to the management UI.
+ *
+ * @returns {Promise<import("react").JSX.Element>}
+ */
 export default async function CategoriesPage() {
   const session = await requireSession();
 

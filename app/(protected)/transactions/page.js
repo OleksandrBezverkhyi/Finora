@@ -2,6 +2,11 @@ import TransactionsManager from "@/components/transactions/transactions-manager"
 import prisma from "@/lib/prisma";
 import { requireSession } from "@/lib/session";
 
+/**
+ * Protected transactions page that loads initial categories, transactions, and pagination state.
+ *
+ * @returns {Promise<import("react").JSX.Element>}
+ */
 export default async function TransactionsPage() {
   const session = await requireSession();
 
@@ -59,8 +64,8 @@ export default async function TransactionsPage() {
               Add records, search history, and inspect spending without leaving one screen.
             </h1>
             <p className="muted max-w-2xl text-sm leading-6 sm:text-base">
-              Record each operation, quickly find past entries, and understand where your money
-              goes over time.
+              Record each operation, quickly find past entries, and understand where your money goes
+              over time.
             </p>
           </div>
 

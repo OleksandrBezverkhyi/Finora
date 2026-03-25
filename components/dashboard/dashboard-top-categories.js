@@ -2,6 +2,12 @@
 
 import { formatMoney } from "@/components/dashboard/dashboard-formatters";
 
+/**
+ * Shows top expense categories for the selected dashboard period.
+ *
+ * @param {{ categories: Array<{ categoryId: string, name: string, color?: string | null, amount: string | number }> }} props
+ * @returns {import("react").JSX.Element}
+ */
 export default function DashboardTopCategories({ categories }) {
   return (
     <div className="glass-panel rounded-[1.75rem] p-6">

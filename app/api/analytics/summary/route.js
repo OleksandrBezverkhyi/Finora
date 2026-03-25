@@ -18,6 +18,12 @@ function badRequest(message) {
   return NextResponse.json({ error: message }, { status: 400 });
 }
 
+/**
+ * Returns dashboard summary metrics for the authenticated user and selected period.
+ *
+ * @param {Request} request
+ * @returns {Promise<import("next/server").NextResponse>}
+ */
 export async function GET(request) {
   const user = await getSessionUser();
 

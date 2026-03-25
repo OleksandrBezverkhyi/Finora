@@ -9,6 +9,11 @@ function unauthorizedResponse() {
   return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 }
 
+/**
+ * Returns all categories owned by the authenticated user.
+ *
+ * @returns {Promise<import("next/server").NextResponse>}
+ */
 export async function GET() {
   const user = await getSessionUser();
 
@@ -34,6 +39,12 @@ export async function GET() {
   return NextResponse.json({ ok: true, categories });
 }
 
+/**
+ * Creates a new category for the authenticated user.
+ *
+ * @param {Request} request
+ * @returns {Promise<import("next/server").NextResponse>}
+ */
 export async function POST(request) {
   const user = await getSessionUser();
 

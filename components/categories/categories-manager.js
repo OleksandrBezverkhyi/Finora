@@ -9,6 +9,12 @@ const typeOptions = [
   { value: "INCOME", label: "Income" },
 ];
 
+/**
+ * Top-level category management component that wires form state to the category list UI.
+ *
+ * @param {{ initialCategories: Array<Record<string, unknown>> }} props
+ * @returns {import("react").JSX.Element}
+ */
 export default function CategoriesManager({ initialCategories }) {
   const {
     deletingId,

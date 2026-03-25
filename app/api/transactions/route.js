@@ -51,6 +51,12 @@ function parseFilters(requestUrl) {
   });
 }
 
+/**
+ * Returns a filtered and paginated transaction list for the authenticated user.
+ *
+ * @param {Request} request
+ * @returns {Promise<import("next/server").NextResponse>}
+ */
 export async function GET(request) {
   const user = await getSessionUser();
 
@@ -92,6 +98,12 @@ export async function GET(request) {
   });
 }
 
+/**
+ * Creates a new transaction for the authenticated user.
+ *
+ * @param {Request} request
+ * @returns {Promise<import("next/server").NextResponse>}
+ */
 export async function POST(request) {
   const user = await getSessionUser();
 

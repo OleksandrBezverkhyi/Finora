@@ -23,7 +23,9 @@ function createGroupedCategories(categories) {
 
 function mergeCategories(currentCategories, savedCategory, editingId) {
   const nextCategories = editingId
-    ? currentCategories.map((category) => (category.id === savedCategory.id ? savedCategory : category))
+    ? currentCategories.map((category) =>
+        category.id === savedCategory.id ? savedCategory : category
+      )
     : [...currentCategories, savedCategory];
 
   return nextCategories.sort(sortCategories);
@@ -130,6 +132,25 @@ function createDeleteHandler({ editingId, resetForm, setCategories, setDeletingI
   };
 }
 
+/**
+ * Client hook that manages category CRUD state, editing mode, validation errors, and grouping.
+ *
+ * @param {Array<Record<string, unknown>>} initialCategories
+ * @returns {{
+ *   deletingId: string | null,
+ *   editingId: string | null,
+ *   fieldErrors: Record<string, string[]>,
+ *   formData: Record<string, unknown>,
+ *   formError: string,
+ *   groupedCategories: Record<string, Array<Record<string, unknown>>>,
+ *   handleDelete: (categoryId: string) => Promise<void>,
+ *   handleEdit: (category: Record<string, unknown>) => void,
+ *   handleInputChange: (event: Event) => void,
+ *   handleSubmit: (event: SubmitEvent) => Promise<void>,
+ *   isSubmitting: boolean,
+ *   resetForm: () => void
+ * }}
+ */
 export default function useCategoriesManager(initialCategories) {
   const [categories, setCategories] = useState(initialCategories);
   const [formData, setFormData] = useState(initialForm);

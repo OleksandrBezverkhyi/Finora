@@ -32,6 +32,12 @@ async function handleSignOut() {
   await signOut({ redirectTo: "/login" });
 }
 
+/**
+ * Application shell for authenticated routes with navigation and sign-out action.
+ *
+ * @param {{ children: import("react").ReactNode }} props
+ * @returns {Promise<import("react").JSX.Element>}
+ */
 export default async function AppShell({ children }) {
   const user = await getSessionUser();
 

@@ -13,6 +13,12 @@ const periodOptions = [
   { value: "custom", label: "Custom" },
 ];
 
+/**
+ * Dashboard overview block that handles period switching and renders summary widgets.
+ *
+ * @param {{ initialSummary: Record<string, unknown> }} props
+ * @returns {import("react").JSX.Element}
+ */
 export default function DashboardOverview({ initialSummary }) {
   const {
     applyCustomRange,

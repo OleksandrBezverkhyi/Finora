@@ -33,13 +33,21 @@ async function authenticate(formData) {
   } catch (error) {
     if (error instanceof AuthError) {
       const code = error.type || "Default";
-      redirect(`/login?error=${encodeURIComponent(code)}&callbackUrl=${encodeURIComponent(callbackUrl)}`);
+      redirect(
+        `/login?error=${encodeURIComponent(code)}&callbackUrl=${encodeURIComponent(callbackUrl)}`
+      );
     }
 
     throw error;
   }
 }
 
+/**
+ * Login page that renders the public sign-in interface and reads status from query parameters.
+ *
+ * @param {{ searchParams: Promise<Record<string, string | string[] | undefined>> }} props
+ * @returns {Promise<import("react").JSX.Element>}
+ */
 export default async function LoginPage({ searchParams }) {
   const params = await searchParams;
   const errorCode = params?.error;

@@ -21,11 +21,23 @@ const sortOptions = [
   { value: "amount_asc", label: "Amount: lowest first" },
 ];
 
+/**
+ * Collection of transaction filter form fields used on the transactions page.
+ *
+ * @param {{
+ *   filterCategories: Array<{ id: string, name: string }>,
+ *   filters: Record<string, string>,
+ *   onChange: (event: Event) => void
+ * }} props
+ * @returns {import("react").JSX.Element}
+ */
 export default function TransactionFilterFields({ filterCategories, filters, onChange }) {
   return (
     <div className="mt-8 grid gap-4 md:grid-cols-2">
       <TransactionPrimaryFilters filters={filters} onChange={onChange} />
-      {filters.period === "custom" ? <TransactionRangeFilters filters={filters} onChange={onChange} /> : null}
+      {filters.period === "custom" ? (
+        <TransactionRangeFilters filters={filters} onChange={onChange} />
+      ) : null}
       <TransactionSecondaryFilters
         filterCategories={filterCategories}
         filters={filters}

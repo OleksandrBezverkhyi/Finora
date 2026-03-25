@@ -6,14 +6,18 @@ function SummaryCard({ hint, label, value }) {
   return (
     <div className="glass-panel rounded-[1.75rem] p-6">
       <p className="text-sm font-medium text-[var(--muted)]">{label}</p>
-      <p className="mt-6 text-4xl font-semibold tracking-tight text-[var(--foreground)]">
-        {value}
-      </p>
+      <p className="mt-6 text-4xl font-semibold tracking-tight text-[var(--foreground)]">{value}</p>
       <p className="mt-3 text-sm text-[var(--muted)]">{hint}</p>
     </div>
   );
 }
 
+/**
+ * Renders summary cards for income, expenses, and balance values.
+ *
+ * @param {{ totals: { income: string | number, expense: string | number, balance: string | number } }} props
+ * @returns {import("react").JSX.Element}
+ */
 export default function DashboardSummaryCards({ totals }) {
   return (
     <div className="grid gap-5 sm:grid-cols-2">

@@ -42,6 +42,12 @@ function RegisterActions({ callbackUrl, isSubmitting }) {
   );
 }
 
+/**
+ * Client registration form bound to the register API and post-registration redirect flow.
+ *
+ * @param {{ callbackUrl?: string }} props
+ * @returns {import("react").JSX.Element}
+ */
 export default function RegisterForm({ callbackUrl = "/dashboard" }) {
   const { fieldErrors, formError, handleSubmit, isSubmitting } = useRegisterForm(callbackUrl);
 
