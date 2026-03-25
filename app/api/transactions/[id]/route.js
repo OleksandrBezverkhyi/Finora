@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 
 import prisma from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
+import { getOwnedCategory, serializeTransaction, transactionSelect } from "@/lib/transactions";
 import { transactionSchema } from "@/lib/validators";
 
 function unauthorizedResponse() {
@@ -23,28 +24,6 @@ async function getOwnedTransaction(id, userId) {
       id: true,
     },
   });
-}
-
-async function getOwnedCategory(categoryId, userId) {
-  return prisma.category.findFirst({
-    where: {
-      id: categoryId,
-      userId,
-    },
-    select: {
-      id: true,
-      type: true,
-      name: true,
-      color: true,
-    },
-  });
-}
-
-function serializeTransaction(transaction) {
-  return {
-    ...transaction,
-    amount: transaction.amount.toString(),
-  };
 }
 
 export async function PUT(request, { params }) {
@@ -91,23 +70,7 @@ export async function PUT(request, { params }) {
         id: ownedTransaction.id,
       },
       data: transactionData,
-      select: {
-        id: true,
-        type: true,
-        amount: true,
-        date: true,
-        comment: true,
-        createdAt: true,
-        updatedAt: true,
-        category: {
-          select: {
-            id: true,
-            name: true,
-            type: true,
-            color: true,
-          },
-        },
-      },
+      select: transactionSelect,
     });
 
     return NextResponse.json({
@@ -145,7 +108,7 @@ export async function DELETE(_request, { params }) {
     });
 
     return NextResponse.json({ ok: true });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
