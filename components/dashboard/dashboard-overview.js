@@ -46,8 +46,7 @@ export default function DashboardOverview({ initialSummary }) {
       }
 
       setSummary(data);
-    } catch (requestError) {
-      console.error("Load dashboard summary failed", requestError);
+    } catch {
       setError("Unexpected error. Please try again.");
     } finally {
       setIsLoading(false);

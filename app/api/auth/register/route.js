@@ -58,8 +58,6 @@ export async function POST(request) {
       );
     }
 
-    console.error("Register failed", error);
-
     return NextResponse.json(
       {
         error: "Internal server error",

@@ -119,8 +119,6 @@ export async function PUT(request, { params }) {
       return NextResponse.json({ error: "Invalid category reference" }, { status: 400 });
     }
 
-    console.error("Update transaction failed", error);
-
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
@@ -148,8 +146,6 @@ export async function DELETE(_request, { params }) {
 
     return NextResponse.json({ ok: true });
   } catch (error) {
-    console.error("Delete transaction failed", error);
-
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

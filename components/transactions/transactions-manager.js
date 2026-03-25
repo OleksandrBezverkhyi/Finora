@@ -101,8 +101,7 @@ export default function TransactionsManager({
 
       setTransactions(data.transactions);
       setPagination(data.pagination);
-    } catch (error) {
-      console.error("Load transactions failed", error);
+    } catch {
       setListError("Unexpected error. Please try again.");
     } finally {
       setIsLoading(false);
@@ -146,8 +145,7 @@ export default function TransactionsManager({
       const nextFormState = createInitialFormState(categories, formData.type);
       setFormData(nextFormState);
       await fetchTransactions(1, filters);
-    } catch (error) {
-      console.error("Create transaction failed", error);
+    } catch {
       setFormError("Unexpected error. Please try again.");
     } finally {
       setIsSubmitting(false);

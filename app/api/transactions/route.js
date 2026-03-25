@@ -338,8 +338,6 @@ export async function POST(request) {
       return NextResponse.json({ error: "Invalid category reference" }, { status: 400 });
     }
 
-    console.error("Create transaction failed", error);
-
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

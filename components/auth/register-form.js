@@ -63,8 +63,7 @@ export default function RegisterForm({ callbackUrl = "/dashboard" }) {
 
       router.push(`${loginUrl.pathname}${loginUrl.search}`);
       router.refresh();
-    } catch (error) {
-      console.error("Register request failed", error);
+    } catch {
       setFormError("Unexpected error. Please try again.");
     } finally {
       setIsSubmitting(false);

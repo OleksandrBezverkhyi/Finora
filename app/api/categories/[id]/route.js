@@ -77,8 +77,6 @@ export async function PUT(request, { params }) {
       );
     }
 
-    console.error("Update category failed", error);
-
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
@@ -114,8 +112,6 @@ export async function DELETE(_request, { params }) {
         { status: 409 }
       );
     }
-
-    console.error("Delete category failed", error);
 
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }

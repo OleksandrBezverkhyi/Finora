@@ -96,8 +96,7 @@ export default function CategoriesManager({ initialCategories }) {
       });
 
       resetForm();
-    } catch (error) {
-      console.error("Save category failed", error);
+    } catch {
       setFormError("Unexpected error. Please try again.");
     } finally {
       setIsSubmitting(false);
@@ -136,8 +135,7 @@ export default function CategoriesManager({ initialCategories }) {
       if (editingId === categoryId) {
         resetForm();
       }
-    } catch (error) {
-      console.error("Delete category failed", error);
+    } catch {
       setFormError("Unexpected error. Please try again.");
     } finally {
       setDeletingId(null);
