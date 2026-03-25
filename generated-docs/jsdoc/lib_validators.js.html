@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: lib/validators.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: lib/validators.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>import { z } from "zod";
+
+const email = z
+  .email("Enter a valid email address")
+  .transform((value) => value.trim().toLowerCase());
+const categoryColor = z
+  .string()
+  .trim()
+  .regex(/^#[0-9A-Fa-f]{6}$/, "Color must be a valid HEX value")
+  .transform((value) => value.toUpperCase());
+
+const password = z
+  .string()
+  .min(8, "Password must be at least 8 characters long")
+  .max(72, "Password must be 72 characters or fewer");
+
+/**
+ * Zod schema for registration payload validation and normalization.
+ */
+export const registerSchema = z
+  .object({
+    email,
+    password,
+    confirmPassword: z.string(),
+    name: z
+      .string()
+      .trim()
+      .min(2, "Name must be at least 2 characters long")
+      .max(50, "Name must be 50 characters or fewer")
+      .optional()
+      .or(z.literal("")),
+  })
+  .superRefine(({ password, confirmPassword }, ctx) => {
+    if (password !== confirmPassword) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Passwords do not match",
+        path: ["confirmPassword"],
+      });
+    }
+  })
+  .transform((data) => ({
+    email: data.email,
+    password: data.password,
+    name: data.name?.trim() ? data.name.trim() : null,
+    currency: "UAH",
+  }));
+
+/**
+ * Zod schema for validating login credentials.
+ */
+export const loginSchema = z.object({
+  email,
+  password,
+});
+
+/**
+ * Zod schema for category creation and update payloads.
+ */
+export const categorySchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(2, "Name must be at least 2 characters long")
+    .max(40, "Name must be 40 characters or fewer"),
+  type: z.enum(["INCOME", "EXPENSE"], {
+    error: "Type must be either INCOME or EXPENSE",
+  }),
+  color: categoryColor
+    .optional()
+    .or(z.literal(""))
+    .transform((value) => value || null),
+});
+
+/**
+ * Zod schema for transaction creation and update payloads.
+ */
+export const transactionSchema = z.object({
+  type: z.enum(["INCOME", "EXPENSE"], {
+    error: "Type must be either INCOME or EXPENSE",
+  }),
+  categoryId: z.string().trim().min(1, "Category is required"),
+  amount: z.coerce
+    .number({
+      error: "Amount must be a valid number",
+    })
+    .positive("Amount must be greater than 0")
+    .max(999999999.99, "Amount is too large"),
+  date: z.coerce.date({
+    error: "Date must be valid",
+  }),
+  comment: z
+    .string()
+    .trim()
+    .max(255, "Comment must be 255 characters or fewer")
+    .optional()
+    .or(z.literal(""))
+    .transform((value) => value || null),
+});
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Global</h3><ul><li><a href="global.html"></a></li><li><a href="global.html#DELETE">DELETE</a></li><li><a href="global.html#GET">GET</a></li><li><a href="global.html#PAGE_SIZE">PAGE_SIZE</a></li><li><a href="global.html#POST">POST</a></li><li><a href="global.html#PUT">PUT</a></li><li><a href="global.html#buildSummaryDateRange">buildSummaryDateRange</a></li><li><a href="global.html#buildTransactionDateFilter">buildTransactionDateFilter</a></li><li><a href="global.html#buildTransactionOrderBy">buildTransactionOrderBy</a></li><li><a href="global.html#buildTransactionWhere">buildTransactionWhere</a></li><li><a href="global.html#categorySchema">categorySchema</a></li><li><a href="global.html#config">config</a></li><li><a href="global.html#createInitialFormState">createInitialFormState</a></li><li><a href="global.html#formatDate">formatDate</a></li><li><a href="global.html#formatDateInput">formatDateInput</a></li><li><a href="global.html#formatMoney">formatMoney</a></li><li><a href="global.html#formatPeriodLabel">formatPeriodLabel</a></li><li><a href="global.html#getDashboardSummary">getDashboardSummary</a></li><li><a href="global.html#getOwnedCategory">getOwnedCategory</a></li><li><a href="global.html#getServerAuthSession">getServerAuthSession</a></li><li><a href="global.html#getSessionUser">getSessionUser</a></li><li><a href="global.html#getSummaryPeriodRange">getSummaryPeriodRange</a></li><li><a href="global.html#getTransactionPeriodRange">getTransactionPeriodRange</a></li><li><a href="global.html#getVisiblePages">getVisiblePages</a></li><li><a href="global.html#listTransactions">listTransactions</a></li><li><a href="global.html#loginSchema">loginSchema</a></li><li><a href="global.html#metadata">metadata</a></li><li><a href="global.html#middleware">middleware</a></li><li><a href="global.html#registerSchema">registerSchema</a></li><li><a href="global.html#requireSession">requireSession</a></li><li><a href="global.html#serializeTransaction">serializeTransaction</a></li><li><a href="global.html#toDateInputValue">toDateInputValue</a></li><li><a href="global.html#transactionSchema">transactionSchema</a></li><li><a href="global.html#transactionSelect">transactionSelect</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a>
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

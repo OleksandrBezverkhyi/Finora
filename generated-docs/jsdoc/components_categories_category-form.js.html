@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: components/categories/category-form.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: components/categories/category-form.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>"use client";
+
+function CategoryFieldError({ error }) {
+  if (!error) {
+    return null;
+  }
+
+  return &lt;p className="mt-2 text-sm text-rose-700">{error}&lt;/p>;
+}
+
+function CategorySubmitButton({ editingId, isSubmitting }) {
+  const label = isSubmitting
+    ? editingId
+      ? "Saving..."
+      : "Creating..."
+    : editingId
+      ? "Save changes"
+      : "Add category";
+
+  return (
+    &lt;button
+      type="submit"
+      disabled={isSubmitting}
+      className="rounded-full bg-[var(--accent)] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[var(--accent-strong)] hover:shadow-[0_14px_30px_rgba(15,118,110,0.24)] disabled:cursor-not-allowed disabled:opacity-70"
+    >
+      {label}
+    &lt;/button>
+  );
+}
+
+function CategoryFormHeader({ editingId }) {
+  return (
+    &lt;div className="space-y-3">
+      &lt;p className="eyebrow">{editingId ? "Edit category" : "Add category"}&lt;/p>
+      &lt;h2 className="text-3xl font-semibold tracking-tight text-[var(--foreground)]">
+        {editingId ? "Update current category" : "Create a new category"}
+      &lt;/h2>
+      &lt;p className="muted text-sm leading-6">
+        Use simple, recognizable category names so your reports and transaction history stay easy to
+        read.
+      &lt;/p>
+    &lt;/div>
+  );
+}
+
+function CategoryFormBody({
+  editingId,
+  fieldErrors,
+  formData,
+  formError,
+  isSubmitting,
+  onInputChange,
+  onReset,
+  onSubmit,
+  typeOptions,
+}) {
+  return (
+    &lt;form onSubmit={onSubmit} className="mt-8 space-y-5">
+      &lt;CategoryBasicFields
+        fieldErrors={fieldErrors}
+        formData={formData}
+        onInputChange={onInputChange}
+        typeOptions={typeOptions}
+      />
+      &lt;CategoryColorField
+        color={formData.color}
+        error={fieldErrors.color?.[0]}
+        onInputChange={onInputChange}
+      />
+
+      {formError ? (
+        &lt;div className="rounded-2xl border border-rose-300 bg-rose-50 px-4 py-3 text-sm text-rose-800">
+          {formError}
+        &lt;/div>
+      ) : null}
+
+      &lt;div className="flex flex-col gap-3 sm:flex-row">
+        &lt;CategorySubmitButton editingId={editingId} isSubmitting={isSubmitting} />
+        {editingId ? (
+          &lt;button
+            type="button"
+            onClick={onReset}
+            className="rounded-full border border-[var(--border)] bg-white px-5 py-3 text-sm font-semibold text-[var(--foreground)] transition hover:border-[var(--accent)] hover:text-[var(--accent-strong)]"
+          >
+            Cancel edit
+          &lt;/button>
+        ) : null}
+      &lt;/div>
+    &lt;/form>
+  );
+}
+
+function CategoryBasicFields({ fieldErrors, formData, onInputChange, typeOptions }) {
+  return (
+    &lt;>
+      &lt;label className="block space-y-2">
+        &lt;span className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--muted)]">
+          Name
+        &lt;/span>
+        &lt;input
+          name="name"
+          type="text"
+          value={formData.name}
+          onChange={onInputChange}
+          placeholder="Groceries"
+          required
+          className="w-full rounded-2xl border border-[var(--border)] bg-white px-4 py-3 text-base text-[var(--foreground)] outline-none transition placeholder:text-[var(--muted)]/70 focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-soft)]"
+        />
+        &lt;CategoryFieldError error={fieldErrors.name?.[0]} />
+      &lt;/label>
+
+      &lt;label className="block space-y-2">
+        &lt;span className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--muted)]">
+          Type
+        &lt;/span>
+        &lt;select
+          name="type"
+          value={formData.type}
+          onChange={onInputChange}
+          className="w-full rounded-2xl border border-[var(--border)] bg-white px-4 py-3 text-base text-[var(--foreground)] outline-none transition focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-soft)]"
+        >
+          {typeOptions.map((option) => (
+            &lt;option key={option.value} value={option.value}>
+              {option.label}
+            &lt;/option>
+          ))}
+        &lt;/select>
+        &lt;CategoryFieldError error={fieldErrors.type?.[0]} />
+      &lt;/label>
+    &lt;/>
+  );
+}
+
+function CategoryColorField({ color, error, onInputChange }) {
+  return (
+    &lt;label className="block space-y-2">
+      &lt;span className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--muted)]">
+        Color
+      &lt;/span>
+      &lt;div className="flex items-center gap-3 rounded-2xl border border-[var(--border)] bg-white px-4 py-3">
+        &lt;input
+          name="color"
+          type="color"
+          value={color}
+          onChange={onInputChange}
+          className="h-10 w-12 cursor-pointer rounded-lg border border-[var(--border)] bg-transparent"
+        />
+        &lt;span className="font-mono text-sm text-[var(--foreground)]/70">{color}&lt;/span>
+      &lt;/div>
+      &lt;CategoryFieldError error={error} />
+    &lt;/label>
+  );
+}
+
+/**
+ * Form panel used for creating and editing user categories.
+ *
+ * @param {{
+ *   editingId: string | null,
+ *   formData: Record&lt;string, any>,
+ *   fieldErrors: Record&lt;string, string[]>,
+ *   formError: string,
+ *   isSubmitting: boolean,
+ *   typeOptions: Array&lt;{ value: string, label: string }>,
+ *   onInputChange: (event: Event) => void,
+ *   onSubmit: (event: SubmitEvent) => Promise&lt;void>,
+ *   onReset: () => void
+ * }} props
+ * @returns {import("react").JSX.Element}
+ */
+export default function CategoryForm({
+  editingId,
+  formData,
+  fieldErrors,
+  formError,
+  isSubmitting,
+  typeOptions,
+  onInputChange,
+  onSubmit,
+  onReset,
+}) {
+  return (
+    &lt;section className="glass-panel rounded-[1.75rem] p-6 sm:p-8">
+      &lt;CategoryFormHeader editingId={editingId} />
+      &lt;CategoryFormBody
+        editingId={editingId}
+        fieldErrors={fieldErrors}
+        formData={formData}
+        formError={formError}
+        isSubmitting={isSubmitting}
+        onInputChange={onInputChange}
+        onReset={onReset}
+        onSubmit={onSubmit}
+        typeOptions={typeOptions}
+      />
+    &lt;/section>
+  );
+}
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Global</h3><ul><li><a href="global.html"></a></li><li><a href="global.html#DELETE">DELETE</a></li><li><a href="global.html#GET">GET</a></li><li><a href="global.html#PAGE_SIZE">PAGE_SIZE</a></li><li><a href="global.html#POST">POST</a></li><li><a href="global.html#PUT">PUT</a></li><li><a href="global.html#buildSummaryDateRange">buildSummaryDateRange</a></li><li><a href="global.html#buildTransactionDateFilter">buildTransactionDateFilter</a></li><li><a href="global.html#buildTransactionOrderBy">buildTransactionOrderBy</a></li><li><a href="global.html#buildTransactionWhere">buildTransactionWhere</a></li><li><a href="global.html#categorySchema">categorySchema</a></li><li><a href="global.html#config">config</a></li><li><a href="global.html#createInitialFormState">createInitialFormState</a></li><li><a href="global.html#formatDate">formatDate</a></li><li><a href="global.html#formatDateInput">formatDateInput</a></li><li><a href="global.html#formatMoney">formatMoney</a></li><li><a href="global.html#formatPeriodLabel">formatPeriodLabel</a></li><li><a href="global.html#getDashboardSummary">getDashboardSummary</a></li><li><a href="global.html#getOwnedCategory">getOwnedCategory</a></li><li><a href="global.html#getServerAuthSession">getServerAuthSession</a></li><li><a href="global.html#getSessionUser">getSessionUser</a></li><li><a href="global.html#getSummaryPeriodRange">getSummaryPeriodRange</a></li><li><a href="global.html#getTransactionPeriodRange">getTransactionPeriodRange</a></li><li><a href="global.html#getVisiblePages">getVisiblePages</a></li><li><a href="global.html#listTransactions">listTransactions</a></li><li><a href="global.html#loginSchema">loginSchema</a></li><li><a href="global.html#metadata">metadata</a></li><li><a href="global.html#middleware">middleware</a></li><li><a href="global.html#registerSchema">registerSchema</a></li><li><a href="global.html#requireSession">requireSession</a></li><li><a href="global.html#serializeTransaction">serializeTransaction</a></li><li><a href="global.html#toDateInputValue">toDateInputValue</a></li><li><a href="global.html#transactionSchema">transactionSchema</a></li><li><a href="global.html#transactionSelect">transactionSelect</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a>
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

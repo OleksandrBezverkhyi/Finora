@@ -42,6 +42,3 @@ next-env.d.ts
 
 # git hooks
 .husky/_
-
-# generated documentation
-/generated-docs

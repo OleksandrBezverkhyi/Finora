@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: components/transactions/transaction-utils.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: components/transactions/transaction-utils.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * Creates initial form values for the transaction creation form based on available categories.
+ *
+ * @param {Array&lt;{ id: string, type: string }>} categories
+ * @param {string} [preferredType="EXPENSE"]
+ * @returns {{ type: string, categoryId: string, amount: string, date: string, comment: string }}
+ */
+export function createInitialFormState(categories, preferredType = "EXPENSE") {
+  const nextType = categories.some((category) => category.type === preferredType)
+    ? preferredType
+    : "INCOME";
+  const nextCategory = categories.find((category) => category.type === nextType) || categories[0];
+
+  return {
+    type: nextCategory?.type || "EXPENSE",
+    categoryId: nextCategory?.id || "",
+    amount: "",
+    date: formatDateInput(new Date()),
+    comment: "",
+  };
+}
+
+/**
+ * Formats a Date object as a local `YYYY-MM-DD` string for date inputs.
+ *
+ * @param {Date} date
+ * @returns {string}
+ */
+export function formatDateInput(date) {
+  const offset = date.getTimezoneOffset();
+  const localDate = new Date(date.getTime() - offset * 60_000);
+  return localDate.toISOString().slice(0, 10);
+}
+
+/**
+ * Formats a transaction date for UI display.
+ *
+ * @param {string | number | Date} value
+ * @returns {string}
+ */
+export function formatDate(value) {
+  return new Intl.DateTimeFormat("uk-UA", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  }).format(new Date(value));
+}
+
+/**
+ * Formats a transaction amount as hryvnia currency.
+ *
+ * @param {string | number} amount
+ * @returns {string}
+ */
+export function formatMoney(amount) {
+  return new Intl.NumberFormat("uk-UA", {
+    style: "currency",
+    currency: "UAH",
+    minimumFractionDigits: 2,
+  }).format(Number(amount));
+}
+
+/**
+ * Computes the small pagination window shown around the current page.
+ *
+ * @param {number} currentPage
+ * @param {number} totalPages
+ * @returns {number[]}
+ */
+export function getVisiblePages(currentPage, totalPages) {
+  const start = Math.max(1, currentPage - 1);
+  const end = Math.min(totalPages, currentPage + 1);
+  const pages = [];
+
+  for (let page = start; page &lt;= end; page += 1) {
+    pages.push(page);
+  }
+
+  if (!pages.includes(1)) {
+    pages.unshift(1);
+  }
+
+  if (!pages.includes(totalPages)) {
+    pages.push(totalPages);
+  }
+
+  return [...new Set(pages)];
+}
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Global</h3><ul><li><a href="global.html"></a></li><li><a href="global.html#DELETE">DELETE</a></li><li><a href="global.html#GET">GET</a></li><li><a href="global.html#PAGE_SIZE">PAGE_SIZE</a></li><li><a href="global.html#POST">POST</a></li><li><a href="global.html#PUT">PUT</a></li><li><a href="global.html#buildSummaryDateRange">buildSummaryDateRange</a></li><li><a href="global.html#buildTransactionDateFilter">buildTransactionDateFilter</a></li><li><a href="global.html#buildTransactionOrderBy">buildTransactionOrderBy</a></li><li><a href="global.html#buildTransactionWhere">buildTransactionWhere</a></li><li><a href="global.html#categorySchema">categorySchema</a></li><li><a href="global.html#config">config</a></li><li><a href="global.html#createInitialFormState">createInitialFormState</a></li><li><a href="global.html#formatDate">formatDate</a></li><li><a href="global.html#formatDateInput">formatDateInput</a></li><li><a href="global.html#formatMoney">formatMoney</a></li><li><a href="global.html#formatPeriodLabel">formatPeriodLabel</a></li><li><a href="global.html#getDashboardSummary">getDashboardSummary</a></li><li><a href="global.html#getOwnedCategory">getOwnedCategory</a></li><li><a href="global.html#getServerAuthSession">getServerAuthSession</a></li><li><a href="global.html#getSessionUser">getSessionUser</a></li><li><a href="global.html#getSummaryPeriodRange">getSummaryPeriodRange</a></li><li><a href="global.html#getTransactionPeriodRange">getTransactionPeriodRange</a></li><li><a href="global.html#getVisiblePages">getVisiblePages</a></li><li><a href="global.html#listTransactions">listTransactions</a></li><li><a href="global.html#loginSchema">loginSchema</a></li><li><a href="global.html#metadata">metadata</a></li><li><a href="global.html#middleware">middleware</a></li><li><a href="global.html#registerSchema">registerSchema</a></li><li><a href="global.html#requireSession">requireSession</a></li><li><a href="global.html#serializeTransaction">serializeTransaction</a></li><li><a href="global.html#toDateInputValue">toDateInputValue</a></li><li><a href="global.html#transactionSchema">transactionSchema</a></li><li><a href="global.html#transactionSelect">transactionSelect</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a>
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

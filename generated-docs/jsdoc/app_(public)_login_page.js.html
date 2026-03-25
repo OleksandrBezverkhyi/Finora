@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: app/(public)/login/page.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: app/(public)/login/page.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>import Link from "next/link";
+import { redirect } from "next/navigation";
+import { AuthError } from "next-auth";
+
+import AuthField from "@/components/auth/auth-field";
+import AuthShowcase from "@/components/auth/auth-showcase";
+import { signIn } from "@/lib/auth";
+
+const errorMessages = {
+  CredentialsSignin: "Invalid email or password.",
+  Default: "Unable to sign in right now. Try again.",
+};
+
+const showcaseCards = [
+  { eyebrow: "Overview", value: "Income" },
+  { eyebrow: "Planning", value: "Budget" },
+  { eyebrow: "Control", value: "Balance" },
+];
+
+async function authenticate(formData) {
+  "use server";
+
+  const email = formData.get("email");
+  const password = formData.get("password");
+  const callbackUrl = formData.get("callbackUrl") || "/dashboard";
+
+  try {
+    await signIn("credentials", {
+      email,
+      password,
+      redirectTo: callbackUrl,
+    });
+  } catch (error) {
+    if (error instanceof AuthError) {
+      const code = error.type || "Default";
+      redirect(
+        `/login?error=${encodeURIComponent(code)}&amp;callbackUrl=${encodeURIComponent(callbackUrl)}`
+      );
+    }
+
+    throw error;
+  }
+}
+
+/**
+ * Login page that renders the public sign-in interface and reads status from query parameters.
+ *
+ * @param {{ searchParams: Promise&lt;Record&lt;string, string | string[] | undefined>> }} props
+ * @returns {Promise&lt;import("react").JSX.Element>}
+ */
+export default async function LoginPage({ searchParams }) {
+  const params = await searchParams;
+  const errorCode = params?.error;
+  const callbackUrl = params?.callbackUrl || "/dashboard";
+  const registered = params?.registered === "1";
+  const registeredEmail = params?.email || "";
+  const errorMessage = errorCode ? errorMessages[errorCode] || errorMessages.Default : null;
+
+  return (
+    &lt;section className="glass-panel w-full max-w-5xl overflow-hidden rounded-[2rem]">
+      &lt;div className="grid min-h-[680px] lg:grid-cols-[1.08fr_0.92fr]">
+        &lt;AuthShowcase
+          gradientClassName="bg-[linear-gradient(145deg,#115e59_0%,#0f766e_48%,#14b8a6_100%)]"
+          title="Track income and spending with a cleaner daily workflow."
+          description="Stay on top of your budget, follow daily expenses, and keep every financial decision in one organized space."
+          cards={showcaseCards}
+        />
+        &lt;LoginPanel
+          callbackUrl={callbackUrl}
+          errorMessage={errorMessage}
+          registered={registered}
+          registeredEmail={registeredEmail}
+        />
+      &lt;/div>
+    &lt;/section>
+  );
+}
+
+function LoginPanel({ callbackUrl, errorMessage, registered, registeredEmail }) {
+  return (
+    &lt;div className="flex items-center bg-[rgba(255,253,248,0.88)] px-6 py-8 sm:px-10 lg:px-12">
+      &lt;div className="w-full space-y-8">
+        &lt;div className="space-y-3">
+          &lt;p className="eyebrow">Login&lt;/p>
+          &lt;h2 className="text-3xl font-semibold tracking-tight text-[var(--foreground)]">
+            Welcome back
+          &lt;/h2>
+          &lt;p className="muted max-w-md text-sm leading-6">
+            Sign in to review your finances, recent transactions, and current balance.
+          &lt;/p>
+        &lt;/div>
+
+        &lt;form action={authenticate} className="space-y-5">
+          &lt;input type="hidden" name="callbackUrl" value={callbackUrl} />
+          &lt;AuthField
+            label="Email"
+            name="email"
+            type="email"
+            autoComplete="email"
+            required
+            defaultValue={registeredEmail}
+            placeholder="name@example.com"
+          />
+          &lt;AuthField
+            label="Password"
+            name="password"
+            type="password"
+            autoComplete="current-password"
+            required
+            placeholder="Enter your password"
+          />
+          {registered ? &lt;SuccessNotice /> : null}
+          {errorMessage ? &lt;ErrorNotice message={errorMessage} /> : null}
+          &lt;LoginActions callbackUrl={callbackUrl} />
+        &lt;/form>
+
+        &lt;div className="rounded-2xl border border-dashed border-[var(--border)] px-4 py-4">
+          &lt;p className="text-sm font-medium text-[var(--foreground)]">No account yet?&lt;/p>
+          &lt;p className="muted mt-2 text-sm leading-6">
+            Create an account in a few steps and start keeping your personal finances in order.
+          &lt;/p>
+        &lt;/div>
+      &lt;/div>
+    &lt;/div>
+  );
+}
+
+function LoginActions({ callbackUrl }) {
+  const registerHref =
+    callbackUrl &amp;&amp; callbackUrl !== "/dashboard"
+      ? `/register?callbackUrl=${encodeURIComponent(callbackUrl)}`
+      : "/register";
+
+  return (
+    &lt;div className="flex flex-col gap-3 pt-2 sm:flex-row">
+      &lt;button
+        type="submit"
+        className="rounded-full bg-[var(--accent)] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[var(--accent-strong)] hover:shadow-[0_14px_30px_rgba(15,118,110,0.24)]"
+      >
+        Sign in
+      &lt;/button>
+      &lt;Link
+        href={registerHref}
+        className="rounded-full border border-[var(--border)] bg-white px-5 py-3 text-center text-sm font-semibold text-[var(--foreground)] transition hover:border-[var(--accent)] hover:text-[var(--accent-strong)]"
+      >
+        Create account
+      &lt;/Link>
+    &lt;/div>
+  );
+}
+
+function SuccessNotice() {
+  return (
+    &lt;div className="rounded-2xl border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+      Account created successfully. Sign in with your new credentials.
+    &lt;/div>
+  );
+}
+
+function ErrorNotice({ message }) {
+  return (
+    &lt;div className="rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+      {message}
+    &lt;/div>
+  );
+}
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Global</h3><ul><li><a href="global.html"></a></li><li><a href="global.html#DELETE">DELETE</a></li><li><a href="global.html#GET">GET</a></li><li><a href="global.html#PAGE_SIZE">PAGE_SIZE</a></li><li><a href="global.html#POST">POST</a></li><li><a href="global.html#PUT">PUT</a></li><li><a href="global.html#buildSummaryDateRange">buildSummaryDateRange</a></li><li><a href="global.html#buildTransactionDateFilter">buildTransactionDateFilter</a></li><li><a href="global.html#buildTransactionOrderBy">buildTransactionOrderBy</a></li><li><a href="global.html#buildTransactionWhere">buildTransactionWhere</a></li><li><a href="global.html#categorySchema">categorySchema</a></li><li><a href="global.html#config">config</a></li><li><a href="global.html#createInitialFormState">createInitialFormState</a></li><li><a href="global.html#formatDate">formatDate</a></li><li><a href="global.html#formatDateInput">formatDateInput</a></li><li><a href="global.html#formatMoney">formatMoney</a></li><li><a href="global.html#formatPeriodLabel">formatPeriodLabel</a></li><li><a href="global.html#getDashboardSummary">getDashboardSummary</a></li><li><a href="global.html#getOwnedCategory">getOwnedCategory</a></li><li><a href="global.html#getServerAuthSession">getServerAuthSession</a></li><li><a href="global.html#getSessionUser">getSessionUser</a></li><li><a href="global.html#getSummaryPeriodRange">getSummaryPeriodRange</a></li><li><a href="global.html#getTransactionPeriodRange">getTransactionPeriodRange</a></li><li><a href="global.html#getVisiblePages">getVisiblePages</a></li><li><a href="global.html#listTransactions">listTransactions</a></li><li><a href="global.html#loginSchema">loginSchema</a></li><li><a href="global.html#metadata">metadata</a></li><li><a href="global.html#middleware">middleware</a></li><li><a href="global.html#registerSchema">registerSchema</a></li><li><a href="global.html#requireSession">requireSession</a></li><li><a href="global.html#serializeTransaction">serializeTransaction</a></li><li><a href="global.html#toDateInputValue">toDateInputValue</a></li><li><a href="global.html#transactionSchema">transactionSchema</a></li><li><a href="global.html#transactionSelect">transactionSelect</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a>
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

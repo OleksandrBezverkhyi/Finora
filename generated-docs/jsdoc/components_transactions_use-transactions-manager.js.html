@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: components/transactions/use-transactions-manager.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: components/transactions/use-transactions-manager.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>"use client";
+
+import { useState } from "react";
+
+import { createInitialFormState } from "@/components/transactions/transaction-utils";
+
+const initialFilterState = {
+  period: "",
+  from: "",
+  to: "",
+  type: "",
+  categoryId: "",
+  q: "",
+  min: "",
+  max: "",
+  sort: "date_desc",
+};
+
+const initialFieldErrors = {
+  type: [],
+  categoryId: [],
+  amount: [],
+  date: [],
+  comment: [],
+};
+
+function createSearchParams(nextFilters, nextPage) {
+  const params = new URLSearchParams();
+
+  Object.entries(nextFilters).forEach(([key, value]) => {
+    if (!value) {
+      return;
+    }
+
+    if ((key === "from" || key === "to") &amp;&amp; nextFilters.period !== "custom") {
+      return;
+    }
+
+    params.set(key, value);
+  });
+
+  params.set("page", String(nextPage));
+  return params;
+}
+
+function createFetchTransactions({
+  filters,
+  setIsLoading,
+  setListError,
+  setPagination,
+  setTransactions,
+}) {
+  return async function fetchTransactions(nextPage = 1, nextFilters = filters) {
+    setIsLoading(true);
+    setListError("");
+
+    try {
+      const response = await fetch(
+        `/api/transactions?${createSearchParams(nextFilters, nextPage).toString()}`
+      );
+      const data = await response.json();
+
+      if (!response.ok) {
+        setListError(data.error || "Unable to load transactions right now.");
+        return;
+      }
+
+      setTransactions(data.transactions);
+      setPagination(data.pagination);
+    } catch {
+      setListError("Unexpected error. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+}
+
+function createTransactionSubmitHandler({
+  categories,
+  fetchTransactions,
+  filters,
+  formData,
+  setFieldErrors,
+  setFormData,
+  setFormError,
+  setIsSubmitting,
+}) {
+  return async function handleCreateTransaction(event) {
+    event.preventDefault();
+    setIsSubmitting(true);
+    setFormError("");
+    setFieldErrors(initialFieldErrors);
+
+    try {
+      const response = await fetch("/api/transactions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...formData, amount: Number(formData.amount) }),
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        if (response.status === 400 &amp;&amp; data.issues) {
+          setFieldErrors({ ...initialFieldErrors, ...data.issues.fieldErrors });
+          setFormError(data.issues.formErrors?.[0] || "");
+          return;
+        }
+
+        setFormError(data.error || "Unable to save transaction right now.");
+        return;
+      }
+
+      setFormData(createInitialFormState(categories, formData.type));
+      await fetchTransactions(1, filters);
+    } catch {
+      setFormError("Unexpected error. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+}
+
+function createFormChangeHandler(categories, setFormData) {
+  return function handleFormChange(event) {
+    const { name, value } = event.target;
+
+    if (name === "type") {
+      const nextCategory = categories.find((category) => category.type === value);
+      setFormData((current) => ({ ...current, type: value, categoryId: nextCategory?.id || "" }));
+      return;
+    }
+
+    setFormData((current) => ({ ...current, [name]: value }));
+  };
+}
+
+function createFilterChangeHandler(categories, setFilters) {
+  return function handleFilterChange(event) {
+    const { name, value } = event.target;
+
+    setFilters((current) => {
+      const next = { ...current, [name]: value };
+
+      if (name === "period" &amp;&amp; value !== "custom") {
+        next.from = "";
+        next.to = "";
+      }
+
+      if (name === "type" &amp;&amp; !isFilterCategoryValid(categories, current.categoryId, value)) {
+        next.categoryId = "";
+      }
+
+      return next;
+    });
+  };
+}
+
+/**
+ * Client hook that manages transaction creation, filtering, list refresh, and pagination state.
+ *
+ * @param {{
+ *   categories: Array&lt;Record&lt;string, any>>,
+ *   initialPagination: Record&lt;string, number>,
+ *   initialTransactions: Array&lt;Record&lt;string, any>>
+ * }} params
+ * @returns {{
+ *   applyFilters: () => Promise&lt;void>,
+ *   fetchTransactions: (nextPage?: number, nextFilters?: Record&lt;string, string>) => Promise&lt;void>,
+ *   fieldErrors: Record&lt;string, string[]>,
+ *   filterCategories: Array&lt;Record&lt;string, any>>,
+ *   filters: Record&lt;string, string>,
+ *   formCategories: Array&lt;Record&lt;string, any>>,
+ *   formData: Record&lt;string, any>,
+ *   formError: string,
+ *   handleCreateTransaction: (event: SubmitEvent) => Promise&lt;void>,
+ *   handleFilterChange: (event: Event) => void,
+ *   handleFormChange: (event: Event) => void,
+ *   isLoading: boolean,
+ *   isSubmitting: boolean,
+ *   listError: string,
+ *   pagination: Record&lt;string, number>,
+ *   resetFilters: () => Promise&lt;void>,
+ *   transactions: Array&lt;Record&lt;string, any>>
+ * }}
+ */
+export default function useTransactionsManager({
+  categories,
+  initialPagination,
+  initialTransactions,
+}) {
+  const [transactions, setTransactions] = useState(initialTransactions);
+  const [pagination, setPagination] = useState(initialPagination);
+  const [filters, setFilters] = useState(initialFilterState);
+  const [listError, setListError] = useState("");
+  const [formError, setFormError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState(initialFieldErrors);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState(() =>
+    createInitialFormState(categories, initialTransactions[0]?.type)
+  );
+  const formCategories = categories.filter((category) => category.type === formData.type);
+  const filterCategories = filters.type
+    ? categories.filter((category) => category.type === filters.type)
+    : categories;
+  const fetchTransactions = createFetchTransactions({
+    filters,
+    setIsLoading,
+    setListError,
+    setPagination,
+    setTransactions,
+  });
+  const handleCreateTransaction = createTransactionSubmitHandler({
+    categories,
+    fetchTransactions,
+    filters,
+    formData,
+    setFieldErrors,
+    setFormData,
+    setFormError,
+    setIsSubmitting,
+  });
+  const handleFormChange = createFormChangeHandler(categories, setFormData);
+  const handleFilterChange = createFilterChangeHandler(categories, setFilters);
+  const resetFilters = async () => {
+    setFilters(initialFilterState);
+    await fetchTransactions(1, initialFilterState);
+  };
+
+  return {
+    applyFilters: () => fetchTransactions(1, filters),
+    fetchTransactions,
+    fieldErrors,
+    filterCategories,
+    filters,
+    formCategories,
+    formData,
+    formError,
+    handleCreateTransaction,
+    handleFilterChange,
+    handleFormChange,
+    isLoading,
+    isSubmitting,
+    listError,
+    pagination,
+    resetFilters,
+    transactions,
+  };
+}
+
+function isFilterCategoryValid(categories, currentCategoryId, type) {
+  return categories.some(
+    (category) => category.id === currentCategoryId &amp;&amp; (!type || category.type === type)
+  );
+}
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Global</h3><ul><li><a href="global.html"></a></li><li><a href="global.html#DELETE">DELETE</a></li><li><a href="global.html#GET">GET</a></li><li><a href="global.html#PAGE_SIZE">PAGE_SIZE</a></li><li><a href="global.html#POST">POST</a></li><li><a href="global.html#PUT">PUT</a></li><li><a href="global.html#buildSummaryDateRange">buildSummaryDateRange</a></li><li><a href="global.html#buildTransactionDateFilter">buildTransactionDateFilter</a></li><li><a href="global.html#buildTransactionOrderBy">buildTransactionOrderBy</a></li><li><a href="global.html#buildTransactionWhere">buildTransactionWhere</a></li><li><a href="global.html#categorySchema">categorySchema</a></li><li><a href="global.html#config">config</a></li><li><a href="global.html#createInitialFormState">createInitialFormState</a></li><li><a href="global.html#formatDate">formatDate</a></li><li><a href="global.html#formatDateInput">formatDateInput</a></li><li><a href="global.html#formatMoney">formatMoney</a></li><li><a href="global.html#formatPeriodLabel">formatPeriodLabel</a></li><li><a href="global.html#getDashboardSummary">getDashboardSummary</a></li><li><a href="global.html#getOwnedCategory">getOwnedCategory</a></li><li><a href="global.html#getServerAuthSession">getServerAuthSession</a></li><li><a href="global.html#getSessionUser">getSessionUser</a></li><li><a href="global.html#getSummaryPeriodRange">getSummaryPeriodRange</a></li><li><a href="global.html#getTransactionPeriodRange">getTransactionPeriodRange</a></li><li><a href="global.html#getVisiblePages">getVisiblePages</a></li><li><a href="global.html#listTransactions">listTransactions</a></li><li><a href="global.html#loginSchema">loginSchema</a></li><li><a href="global.html#metadata">metadata</a></li><li><a href="global.html#middleware">middleware</a></li><li><a href="global.html#registerSchema">registerSchema</a></li><li><a href="global.html#requireSession">requireSession</a></li><li><a href="global.html#serializeTransaction">serializeTransaction</a></li><li><a href="global.html#toDateInputValue">toDateInputValue</a></li><li><a href="global.html#transactionSchema">transactionSchema</a></li><li><a href="global.html#transactionSelect">transactionSelect</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a>
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

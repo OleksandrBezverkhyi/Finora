@@ -80,18 +80,14 @@ npm run format
 
 ## Git hooks
 
-The project uses **Husky** together with **lint-staged** to run checks before each commit.
+The project uses **Husky**, but linting is not executed automatically in Git hooks.
 
 The Git hook is stored in:
 
 - [.husky/pre-commit](../.husky/pre-commit)
 
-During `pre-commit`, only staged files are checked:
-
-- `eslint --max-warnings=0 --fix` for `*.js` and `*.mjs`
-- `prettier --write` for staged source and documentation files
-
-This setup helps prevent commits that contain lint warnings or unformatted code.
+The hook is currently configured as a no-op so that code quality checks run only when the
+developer explicitly starts them. This avoids unexpected lint execution during commits.
 
 If dependencies have just been installed, the hooks are activated by:
 
@@ -101,27 +97,21 @@ npm run prepare
 
 ## Integration with the build process
 
-Linting and static checks are integrated into the build script.
+Linting is not triggered automatically during the build process.
 
-The `build` script now runs:
+The `build` script runs:
 
 ```bash
-npm run check && next build
+next build
 ```
 
-This means that before the production build starts, the project performs:
-
-1. Prettier validation
-2. ESLint validation
-3. TypeScript-based static type checking
-
-The combined verification command is:
+The combined manual verification command remains available:
 
 ```bash
 npm run check
 ```
 
-This command is useful both locally and in CI pipelines.
+This command is useful when a full validation pass is needed locally or in CI.
 
 ## Static typing
 

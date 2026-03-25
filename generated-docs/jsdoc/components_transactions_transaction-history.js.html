@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: components/transactions/transaction-history.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: components/transactions/transaction-history.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>"use client";
+
+import {
+  formatDate,
+  formatMoney,
+  getVisiblePages,
+} from "@/components/transactions/transaction-utils";
+
+function TransactionRow({ transaction }) {
+  return (
+    &lt;tr className="rounded-2xl bg-white/75 shadow-[0_8px_24px_rgba(68,53,31,0.06)]">
+      &lt;td className="rounded-l-2xl px-4 py-4 text-sm text-[var(--foreground)]">
+        {formatDate(transaction.date)}
+      &lt;/td>
+      &lt;td className="px-4 py-4">
+        &lt;span
+          className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] ${
+            transaction.type === "INCOME"
+              ? "bg-emerald-100 text-emerald-700"
+              : "bg-rose-100 text-rose-700"
+          }`}
+        >
+          {transaction.type === "INCOME" ? "Income" : "Expense"}
+        &lt;/span>
+      &lt;/td>
+      &lt;td className="px-4 py-4">
+        &lt;div className="flex items-center gap-3">
+          &lt;span
+            className="h-3.5 w-3.5 rounded-full border border-black/5"
+            style={{ backgroundColor: transaction.category.color || "#0F766E" }}
+          />
+          &lt;span className="font-medium text-[var(--foreground)]">{transaction.category.name}&lt;/span>
+        &lt;/div>
+      &lt;/td>
+      &lt;td className="px-4 py-4 text-sm text-[var(--muted)]">
+        {transaction.comment || "No comment"}
+      &lt;/td>
+      &lt;td className="rounded-r-2xl px-4 py-4 text-sm font-semibold text-[var(--foreground)]">
+        {formatMoney(transaction.amount)}
+      &lt;/td>
+    &lt;/tr>
+  );
+}
+
+function TransactionPagination({ fetchTransactions, isLoading, pagination }) {
+  return (
+    &lt;div className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      &lt;p className="text-sm text-[var(--muted)]">
+        Page {pagination.page} of {pagination.totalPages}
+      &lt;/p>
+
+      &lt;div className="flex flex-wrap gap-2">
+        &lt;button
+          type="button"
+          onClick={() => fetchTransactions(pagination.page - 1)}
+          disabled={pagination.page &lt;= 1 || isLoading}
+          className="rounded-full border border-[var(--border)] bg-white px-4 py-2 text-sm font-semibold text-[var(--foreground)] transition hover:border-[var(--accent)] hover:text-[var(--accent-strong)] disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          Previous
+        &lt;/button>
+
+        {getVisiblePages(pagination.page, pagination.totalPages).map((pageNumber) => (
+          &lt;button
+            key={pageNumber}
+            type="button"
+            onClick={() => fetchTransactions(pageNumber)}
+            disabled={isLoading}
+            className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+              pageNumber === pagination.page
+                ? "bg-[var(--accent)] text-white"
+                : "border border-[var(--border)] bg-white text-[var(--foreground)] hover:border-[var(--accent)] hover:text-[var(--accent-strong)]"
+            }`}
+          >
+            {pageNumber}
+          &lt;/button>
+        ))}
+
+        &lt;button
+          type="button"
+          onClick={() => fetchTransactions(pagination.page + 1)}
+          disabled={pagination.page >= pagination.totalPages || isLoading}
+          className="rounded-full border border-[var(--border)] bg-white px-4 py-2 text-sm font-semibold text-[var(--foreground)] transition hover:border-[var(--accent)] hover:text-[var(--accent-strong)] disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          Next
+        &lt;/button>
+      &lt;/div>
+    &lt;/div>
+  );
+}
+
+/**
+ * Paginated transaction history table.
+ *
+ * @param {{
+ *   fetchTransactions: (page?: number) => Promise&lt;void>,
+ *   isLoading: boolean,
+ *   listError: string,
+ *   pagination: { page: number, totalPages: number, total: number },
+ *   transactions: Array&lt;Record&lt;string, any>>
+ * }} props
+ * @returns {import("react").JSX.Element}
+ */
+export default function TransactionHistory({
+  fetchTransactions,
+  isLoading,
+  listError,
+  pagination,
+  transactions,
+}) {
+  return (
+    &lt;section className="glass-panel rounded-[1.75rem] p-6 sm:p-8">
+      &lt;div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        &lt;div className="space-y-3">
+          &lt;p className="eyebrow">History&lt;/p>
+          &lt;h2 className="text-3xl font-semibold tracking-tight text-[var(--foreground)]">
+            Transactions list
+          &lt;/h2>
+          &lt;p className="muted text-sm leading-6">
+            Showing page {pagination.page} of {pagination.totalPages}. Total entries:{" "}
+            {pagination.total}.
+          &lt;/p>
+        &lt;/div>
+
+        &lt;div className="rounded-full border border-[var(--border)] bg-white/80 px-4 py-2 text-sm font-medium text-[var(--foreground)]">
+          {isLoading ? "Refreshing..." : `${transactions.length} visible`}
+        &lt;/div>
+      &lt;/div>
+
+      {listError ? (
+        &lt;div className="mt-6 rounded-2xl border border-rose-300 bg-rose-50 px-4 py-3 text-sm text-rose-800">
+          {listError}
+        &lt;/div>
+      ) : null}
+
+      &lt;div className="mt-8 overflow-x-auto">
+        &lt;table className="min-w-full border-separate border-spacing-y-3">
+          &lt;thead>
+            &lt;tr className="text-left text-xs font-semibold uppercase tracking-[0.16em] text-[var(--muted)]">
+              &lt;th className="px-4 py-2">Date&lt;/th>
+              &lt;th className="px-4 py-2">Type&lt;/th>
+              &lt;th className="px-4 py-2">Category&lt;/th>
+              &lt;th className="px-4 py-2">Comment&lt;/th>
+              &lt;th className="px-4 py-2">Amount&lt;/th>
+            &lt;/tr>
+          &lt;/thead>
+          &lt;tbody>
+            {transactions.length === 0 ? (
+              &lt;tr>
+                &lt;td
+                  colSpan="5"
+                  className="rounded-2xl border border-dashed border-[var(--border)] px-4 py-10 text-center text-sm text-[var(--muted)]"
+                >
+                  No transactions match the selected filters yet.
+                &lt;/td>
+              &lt;/tr>
+            ) : (
+              transactions.map((transaction) => (
+                &lt;TransactionRow key={transaction.id} transaction={transaction} />
+              ))
+            )}
+          &lt;/tbody>
+        &lt;/table>
+      &lt;/div>
+
+      &lt;TransactionPagination
+        fetchTransactions={fetchTransactions}
+        isLoading={isLoading}
+        pagination={pagination}
+      />
+    &lt;/section>
+  );
+}
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Global</h3><ul><li><a href="global.html"></a></li><li><a href="global.html#DELETE">DELETE</a></li><li><a href="global.html#GET">GET</a></li><li><a href="global.html#PAGE_SIZE">PAGE_SIZE</a></li><li><a href="global.html#POST">POST</a></li><li><a href="global.html#PUT">PUT</a></li><li><a href="global.html#buildSummaryDateRange">buildSummaryDateRange</a></li><li><a href="global.html#buildTransactionDateFilter">buildTransactionDateFilter</a></li><li><a href="global.html#buildTransactionOrderBy">buildTransactionOrderBy</a></li><li><a href="global.html#buildTransactionWhere">buildTransactionWhere</a></li><li><a href="global.html#categorySchema">categorySchema</a></li><li><a href="global.html#config">config</a></li><li><a href="global.html#createInitialFormState">createInitialFormState</a></li><li><a href="global.html#formatDate">formatDate</a></li><li><a href="global.html#formatDateInput">formatDateInput</a></li><li><a href="global.html#formatMoney">formatMoney</a></li><li><a href="global.html#formatPeriodLabel">formatPeriodLabel</a></li><li><a href="global.html#getDashboardSummary">getDashboardSummary</a></li><li><a href="global.html#getOwnedCategory">getOwnedCategory</a></li><li><a href="global.html#getServerAuthSession">getServerAuthSession</a></li><li><a href="global.html#getSessionUser">getSessionUser</a></li><li><a href="global.html#getSummaryPeriodRange">getSummaryPeriodRange</a></li><li><a href="global.html#getTransactionPeriodRange">getTransactionPeriodRange</a></li><li><a href="global.html#getVisiblePages">getVisiblePages</a></li><li><a href="global.html#listTransactions">listTransactions</a></li><li><a href="global.html#loginSchema">loginSchema</a></li><li><a href="global.html#metadata">metadata</a></li><li><a href="global.html#middleware">middleware</a></li><li><a href="global.html#registerSchema">registerSchema</a></li><li><a href="global.html#requireSession">requireSession</a></li><li><a href="global.html#serializeTransaction">serializeTransaction</a></li><li><a href="global.html#toDateInputValue">toDateInputValue</a></li><li><a href="global.html#transactionSchema">transactionSchema</a></li><li><a href="global.html#transactionSelect">transactionSelect</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a>
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

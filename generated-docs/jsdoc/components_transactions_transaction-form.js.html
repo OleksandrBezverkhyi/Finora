@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: components/transactions/transaction-form.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: components/transactions/transaction-form.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>"use client";
+
+import Link from "next/link";
+
+const typeOptions = [
+  { value: "EXPENSE", label: "Expense" },
+  { value: "INCOME", label: "Income" },
+];
+
+function FieldError({ error }) {
+  if (!error) {
+    return null;
+  }
+
+  return &lt;p className="mt-2 text-sm text-rose-700">{error}&lt;/p>;
+}
+
+function TransactionFormHeader() {
+  return (
+    &lt;div className="space-y-3">
+      &lt;p className="eyebrow">Add transaction&lt;/p>
+      &lt;h2 className="text-3xl font-semibold tracking-tight text-[var(--foreground)]">
+        Create income and expense records
+      &lt;/h2>
+      &lt;p className="muted text-sm leading-6">
+        Add each operation as soon as it happens to keep your balance and reports accurate.
+      &lt;/p>
+    &lt;/div>
+  );
+}
+
+function TransactionEmptyState() {
+  return (
+    &lt;div className="mt-8 rounded-2xl border border-dashed border-[var(--border)] px-4 py-5">
+      &lt;p className="font-medium text-[var(--foreground)]">
+        Add categories before creating your first transaction.
+      &lt;/p>
+      &lt;p className="muted mt-2 text-sm leading-6">
+        Start with a few categories for income and expenses, then come back here to record your
+        operations.
+      &lt;/p>
+      &lt;Link
+        href="/categories"
+        className="mt-4 inline-flex rounded-full bg-[var(--accent)] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[var(--accent-strong)]"
+      >
+        Open categories
+      &lt;/Link>
+    &lt;/div>
+  );
+}
+
+function TransactionFormFields({
+  fieldErrors,
+  formData,
+  formError,
+  formCategories,
+  isSubmitting,
+  onChange,
+  onSubmit,
+}) {
+  return (
+    &lt;form onSubmit={onSubmit} className="mt-8 space-y-5">
+      &lt;TransactionPrimaryFields
+        fieldErrors={fieldErrors}
+        formCategories={formCategories}
+        formData={formData}
+        onChange={onChange}
+      />
+      &lt;TransactionDetailFields fieldErrors={fieldErrors} formData={formData} onChange={onChange} />
+
+      {formError ? (
+        &lt;div className="rounded-2xl border border-rose-300 bg-rose-50 px-4 py-3 text-sm text-rose-800">
+          {formError}
+        &lt;/div>
+      ) : null}
+
+      &lt;button
+        type="submit"
+        disabled={isSubmitting || !formCategories.length}
+        className="rounded-full bg-[var(--accent)] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[var(--accent-strong)] hover:shadow-[0_14px_30px_rgba(15,118,110,0.24)] disabled:cursor-not-allowed disabled:opacity-70"
+      >
+        {isSubmitting ? "Saving..." : "Add transaction"}
+      &lt;/button>
+    &lt;/form>
+  );
+}
+
+function TransactionPrimaryFields({ fieldErrors, formCategories, formData, onChange }) {
+  return (
+    &lt;>
+      &lt;label className="block space-y-2">
+        &lt;span className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--muted)]">
+          Type
+        &lt;/span>
+        &lt;select
+          name="type"
+          value={formData.type}
+          onChange={onChange}
+          className="w-full rounded-2xl border border-[var(--border)] bg-white px-4 py-3 text-base text-[var(--foreground)] outline-none transition focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-soft)]"
+        >
+          {typeOptions.map((option) => (
+            &lt;option key={option.value} value={option.value}>
+              {option.label}
+            &lt;/option>
+          ))}
+        &lt;/select>
+        &lt;FieldError error={fieldErrors.type?.[0]} />
+      &lt;/label>
+
+      &lt;label className="block space-y-2">
+        &lt;span className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--muted)]">
+          Category
+        &lt;/span>
+        &lt;select
+          name="categoryId"
+          value={formData.categoryId}
+          onChange={onChange}
+          className="w-full rounded-2xl border border-[var(--border)] bg-white px-4 py-3 text-base text-[var(--foreground)] outline-none transition focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-soft)]"
+        >
+          {formCategories.map((category) => (
+            &lt;option key={category.id} value={category.id}>
+              {category.name}
+            &lt;/option>
+          ))}
+        &lt;/select>
+        &lt;FieldError error={fieldErrors.categoryId?.[0]} />
+      &lt;/label>
+    &lt;/>
+  );
+}
+
+function TransactionDetailFields({ fieldErrors, formData, onChange }) {
+  return (
+    &lt;>
+      &lt;div className="grid gap-4 sm:grid-cols-2">
+        &lt;label className="block space-y-2">
+          &lt;span className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--muted)]">
+            Amount, ₴
+          &lt;/span>
+          &lt;input
+            name="amount"
+            type="number"
+            min="0"
+            step="0.01"
+            inputMode="decimal"
+            value={formData.amount}
+            onChange={onChange}
+            placeholder="0.00"
+            className="w-full rounded-2xl border border-[var(--border)] bg-white px-4 py-3 text-base text-[var(--foreground)] outline-none transition placeholder:text-[var(--muted)]/70 focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-soft)]"
+          />
+          &lt;FieldError error={fieldErrors.amount?.[0]} />
+        &lt;/label>
+
+        &lt;label className="block space-y-2">
+          &lt;span className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--muted)]">
+            Date
+          &lt;/span>
+          &lt;input
+            name="date"
+            type="date"
+            value={formData.date}
+            onChange={onChange}
+            className="w-full rounded-2xl border border-[var(--border)] bg-white px-4 py-3 text-base text-[var(--foreground)] outline-none transition focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-soft)]"
+          />
+          &lt;FieldError error={fieldErrors.date?.[0]} />
+        &lt;/label>
+      &lt;/div>
+
+      &lt;label className="block space-y-2">
+        &lt;span className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--muted)]">
+          Comment
+        &lt;/span>
+        &lt;textarea
+          name="comment"
+          rows="4"
+          value={formData.comment}
+          onChange={onChange}
+          placeholder="Optional note"
+          className="w-full rounded-2xl border border-[var(--border)] bg-white px-4 py-3 text-base text-[var(--foreground)] outline-none transition placeholder:text-[var(--muted)]/70 focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-soft)]"
+        />
+        &lt;FieldError error={fieldErrors.comment?.[0]} />
+      &lt;/label>
+    &lt;/>
+  );
+}
+
+/**
+ * Transaction creation form used for adding new income and expense records.
+ *
+ * @param {{
+ *   categories: Array&lt;Record&lt;string, unknown>>,
+ *   fieldErrors: Record&lt;string, string[]>,
+ *   formData: Record&lt;string, any>,
+ *   formError: string,
+ *   formCategories: Array&lt;Record&lt;string, unknown>>,
+ *   isSubmitting: boolean,
+ *   onChange: (event: Event) => void,
+ *   onSubmit: (event: SubmitEvent) => Promise&lt;void>
+ * }} props
+ * @returns {import("react").JSX.Element}
+ */
+export default function TransactionForm({
+  categories,
+  fieldErrors,
+  formData,
+  formError,
+  formCategories,
+  isSubmitting,
+  onChange,
+  onSubmit,
+}) {
+  return (
+    &lt;section className="glass-panel rounded-[1.75rem] p-6 sm:p-8">
+      &lt;TransactionFormHeader />
+      {categories.length === 0 ? (
+        &lt;TransactionEmptyState />
+      ) : (
+        &lt;TransactionFormFields
+          fieldErrors={fieldErrors}
+          formData={formData}
+          formError={formError}
+          formCategories={formCategories}
+          isSubmitting={isSubmitting}
+          onChange={onChange}
+          onSubmit={onSubmit}
+        />
+      )}
+    &lt;/section>
+  );
+}
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Global</h3><ul><li><a href="global.html"></a></li><li><a href="global.html#DELETE">DELETE</a></li><li><a href="global.html#GET">GET</a></li><li><a href="global.html#PAGE_SIZE">PAGE_SIZE</a></li><li><a href="global.html#POST">POST</a></li><li><a href="global.html#PUT">PUT</a></li><li><a href="global.html#buildSummaryDateRange">buildSummaryDateRange</a></li><li><a href="global.html#buildTransactionDateFilter">buildTransactionDateFilter</a></li><li><a href="global.html#buildTransactionOrderBy">buildTransactionOrderBy</a></li><li><a href="global.html#buildTransactionWhere">buildTransactionWhere</a></li><li><a href="global.html#categorySchema">categorySchema</a></li><li><a href="global.html#config">config</a></li><li><a href="global.html#createInitialFormState">createInitialFormState</a></li><li><a href="global.html#formatDate">formatDate</a></li><li><a href="global.html#formatDateInput">formatDateInput</a></li><li><a href="global.html#formatMoney">formatMoney</a></li><li><a href="global.html#formatPeriodLabel">formatPeriodLabel</a></li><li><a href="global.html#getDashboardSummary">getDashboardSummary</a></li><li><a href="global.html#getOwnedCategory">getOwnedCategory</a></li><li><a href="global.html#getServerAuthSession">getServerAuthSession</a></li><li><a href="global.html#getSessionUser">getSessionUser</a></li><li><a href="global.html#getSummaryPeriodRange">getSummaryPeriodRange</a></li><li><a href="global.html#getTransactionPeriodRange">getTransactionPeriodRange</a></li><li><a href="global.html#getVisiblePages">getVisiblePages</a></li><li><a href="global.html#listTransactions">listTransactions</a></li><li><a href="global.html#loginSchema">loginSchema</a></li><li><a href="global.html#metadata">metadata</a></li><li><a href="global.html#middleware">middleware</a></li><li><a href="global.html#registerSchema">registerSchema</a></li><li><a href="global.html#requireSession">requireSession</a></li><li><a href="global.html#serializeTransaction">serializeTransaction</a></li><li><a href="global.html#toDateInputValue">toDateInputValue</a></li><li><a href="global.html#transactionSchema">transactionSchema</a></li><li><a href="global.html#transactionSelect">transactionSelect</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a>
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

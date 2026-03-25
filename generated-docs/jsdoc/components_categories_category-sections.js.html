@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: components/categories/category-sections.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: components/categories/category-sections.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>"use client";
+
+function CategoryEmptyState() {
+  return (
+    &lt;div className="rounded-2xl border border-dashed border-[var(--border)] px-4 py-5 text-sm text-[var(--muted)]">
+      You have not added any categories in this section yet.
+    &lt;/div>
+  );
+}
+
+function CategoryCard({ category, deletingId, onDelete, onEdit }) {
+  return (
+    &lt;article className="rounded-2xl border border-[var(--border)] bg-white/75 px-4 py-4">
+      &lt;div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        &lt;div className="flex items-center gap-3">
+          &lt;span
+            className="h-4 w-4 rounded-full border border-black/5"
+            style={{ backgroundColor: category.color || "#0F766E" }}
+          />
+          &lt;div>
+            &lt;p className="font-semibold text-[var(--foreground)]">{category.name}&lt;/p>
+            &lt;p className="mt-1 text-sm text-[var(--muted)]">
+              {category.color || "Standard category color"}
+            &lt;/p>
+          &lt;/div>
+        &lt;/div>
+
+        &lt;div className="flex gap-2">
+          &lt;button
+            type="button"
+            onClick={() => onEdit(category)}
+            className="rounded-full border border-[var(--border)] bg-white px-4 py-2 text-sm font-semibold text-[var(--foreground)] transition hover:border-[var(--accent)] hover:text-[var(--accent-strong)]"
+          >
+            Edit
+          &lt;/button>
+          &lt;button
+            type="button"
+            onClick={() => onDelete(category.id)}
+            disabled={deletingId === category.id}
+            className="rounded-full border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 transition hover:border-rose-300 hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-70"
+          >
+            {deletingId === category.id ? "Deleting..." : "Delete"}
+          &lt;/button>
+        &lt;/div>
+      &lt;/div>
+    &lt;/article>
+  );
+}
+
+function CategorySection({ categories, deletingId, label, onDelete, onEdit }) {
+  return (
+    &lt;div className="glass-panel rounded-[1.75rem] p-6">
+      &lt;div className="flex items-center justify-between gap-3">
+        &lt;div>
+          &lt;p className="eyebrow">{label}&lt;/p>
+          &lt;h3 className="mt-2 text-2xl font-semibold tracking-tight text-[var(--foreground)]">
+            {label} categories
+          &lt;/h3>
+        &lt;/div>
+        &lt;span className="rounded-full border border-[var(--border)] bg-white/70 px-3 py-1 text-sm font-medium text-[var(--muted)]">
+          {categories.length}
+        &lt;/span>
+      &lt;/div>
+
+      &lt;div className="mt-6 space-y-3">
+        {categories.length === 0 ? (
+          &lt;CategoryEmptyState />
+        ) : (
+          categories.map((category) => (
+            &lt;CategoryCard
+              key={category.id}
+              category={category}
+              deletingId={deletingId}
+              onDelete={onDelete}
+              onEdit={onEdit}
+            />
+          ))
+        )}
+      &lt;/div>
+    &lt;/div>
+  );
+}
+
+/**
+ * Displays grouped category lists with edit and delete actions for each category type.
+ *
+ * @param {{
+ *   deletingId: string | null,
+ *   groupedCategories: Record&lt;string, Array&lt;Record&lt;string, unknown>>>,
+ *   typeOptions: Array&lt;{ value: string, label: string }>,
+ *   onDelete: (categoryId: string) => void,
+ *   onEdit: (category: Record&lt;string, unknown>) => void
+ * }} props
+ * @returns {import("react").JSX.Element}
+ */
+export default function CategorySections({
+  deletingId,
+  groupedCategories,
+  typeOptions,
+  onDelete,
+  onEdit,
+}) {
+  return (
+    &lt;section className="space-y-5">
+      {typeOptions.map((section) => (
+        &lt;CategorySection
+          key={section.value}
+          categories={groupedCategories[section.value]}
+          deletingId={deletingId}
+          label={section.label}
+          onDelete={onDelete}
+          onEdit={onEdit}
+        />
+      ))}
+    &lt;/section>
+  );
+}
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Global</h3><ul><li><a href="global.html"></a></li><li><a href="global.html#DELETE">DELETE</a></li><li><a href="global.html#GET">GET</a></li><li><a href="global.html#PAGE_SIZE">PAGE_SIZE</a></li><li><a href="global.html#POST">POST</a></li><li><a href="global.html#PUT">PUT</a></li><li><a href="global.html#buildSummaryDateRange">buildSummaryDateRange</a></li><li><a href="global.html#buildTransactionDateFilter">buildTransactionDateFilter</a></li><li><a href="global.html#buildTransactionOrderBy">buildTransactionOrderBy</a></li><li><a href="global.html#buildTransactionWhere">buildTransactionWhere</a></li><li><a href="global.html#categorySchema">categorySchema</a></li><li><a href="global.html#config">config</a></li><li><a href="global.html#createInitialFormState">createInitialFormState</a></li><li><a href="global.html#formatDate">formatDate</a></li><li><a href="global.html#formatDateInput">formatDateInput</a></li><li><a href="global.html#formatMoney">formatMoney</a></li><li><a href="global.html#formatPeriodLabel">formatPeriodLabel</a></li><li><a href="global.html#getDashboardSummary">getDashboardSummary</a></li><li><a href="global.html#getOwnedCategory">getOwnedCategory</a></li><li><a href="global.html#getServerAuthSession">getServerAuthSession</a></li><li><a href="global.html#getSessionUser">getSessionUser</a></li><li><a href="global.html#getSummaryPeriodRange">getSummaryPeriodRange</a></li><li><a href="global.html#getTransactionPeriodRange">getTransactionPeriodRange</a></li><li><a href="global.html#getVisiblePages">getVisiblePages</a></li><li><a href="global.html#listTransactions">listTransactions</a></li><li><a href="global.html#loginSchema">loginSchema</a></li><li><a href="global.html#metadata">metadata</a></li><li><a href="global.html#middleware">middleware</a></li><li><a href="global.html#registerSchema">registerSchema</a></li><li><a href="global.html#requireSession">requireSession</a></li><li><a href="global.html#serializeTransaction">serializeTransaction</a></li><li><a href="global.html#toDateInputValue">toDateInputValue</a></li><li><a href="global.html#transactionSchema">transactionSchema</a></li><li><a href="global.html#transactionSelect">transactionSelect</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a>
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "npm run check && next build",
+    "build": "next build",
     "start": "next start",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
@@ -13,7 +13,6 @@
     "typecheck": "tsc --noEmit",
     "check": "npm run format:check && npm run lint && npm run typecheck",
     "docs:generate": "jsdoc -c jsdoc.config.json",
-    "precommit:check": "lint-staged",
     "prepare": "husky",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
@@ -45,14 +44,5 @@
     "prisma": "^7.0.0",
     "tailwindcss": "^4",
     "typescript": "^5.9.3"
-  },
-  "lint-staged": {
-    "*.{js,mjs,ts,tsx}": [
-      "eslint --max-warnings=0 --fix",
-      "prettier --write"
-    ],
-    "*.{json,md,css}": [
-      "prettier --write"
-    ]
   }
 }

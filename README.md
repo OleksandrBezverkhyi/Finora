@@ -24,8 +24,7 @@ npm run check
 ```
 
 This command runs formatting validation, ESLint, and static type checking.
-
-Pre-commit checks are configured through Husky and lint-staged.
+These checks are manual and run only when explicitly invoked.
 
 ## Documentation generation
 

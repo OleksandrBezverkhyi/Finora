@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: components/categories/use-categories-manager.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: components/categories/use-categories-manager.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>"use client";
+
+import { useState } from "react";
+
+const initialForm = {
+  name: "",
+  type: "EXPENSE",
+  color: "#0F766E",
+};
+
+const initialErrors = {
+  name: [],
+  type: [],
+  color: [],
+};
+
+function createGroupedCategories(categories) {
+  return {
+    EXPENSE: categories.filter((category) => category.type === "EXPENSE"),
+    INCOME: categories.filter((category) => category.type === "INCOME"),
+  };
+}
+
+function mergeCategories(currentCategories, savedCategory, editingId) {
+  const nextCategories = editingId
+    ? currentCategories.map((category) =>
+        category.id === savedCategory.id ? savedCategory : category
+      )
+    : [...currentCategories, savedCategory];
+
+  return nextCategories.sort(sortCategories);
+}
+
+function createFormHandlers({ setEditingId, setFieldErrors, setFormData, setFormError }) {
+  function resetForm() {
+    setFormData(initialForm);
+    setFieldErrors(initialErrors);
+    setFormError("");
+    setEditingId(null);
+  }
+
+  function handleInputChange(event) {
+    const { name, value } = event.target;
+    setFormData((current) => ({ ...current, [name]: value }));
+  }
+
+  function handleEdit(category) {
+    setEditingId(category.id);
+    setFieldErrors(initialErrors);
+    setFormError("");
+    setFormData({
+      name: category.name,
+      type: category.type,
+      color: category.color || initialForm.color,
+    });
+  }
+
+  return { handleEdit, handleInputChange, resetForm };
+}
+
+function createSubmitHandler({
+  editingId,
+  formData,
+  resetForm,
+  setCategories,
+  setFieldErrors,
+  setFormError,
+  setIsSubmitting,
+}) {
+  return async function handleSubmit(event) {
+    event.preventDefault();
+    setIsSubmitting(true);
+    setFormError("");
+    setFieldErrors(initialErrors);
+
+    const method = editingId ? "PUT" : "POST";
+    const url = editingId ? `/api/categories/${editingId}` : "/api/categories";
+
+    try {
+      const response = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        if (response.status === 400 &amp;&amp; data.issues) {
+          setFieldErrors({ ...initialErrors, ...data.issues.fieldErrors });
+          setFormError(data.issues.formErrors?.[0] || "");
+          return;
+        }
+
+        setFormError(data.error || "Unable to save category right now.");
+        return;
+      }
+
+      setCategories((current) => mergeCategories(current, data.category, editingId));
+      resetForm();
+    } catch {
+      setFormError("Unexpected error. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+}
+
+function createDeleteHandler({ editingId, resetForm, setCategories, setDeletingId, setFormError }) {
+  return async function handleDelete(categoryId) {
+    setDeletingId(categoryId);
+    setFormError("");
+
+    try {
+      const response = await fetch(`/api/categories/${categoryId}`, { method: "DELETE" });
+      const data = await response.json();
+
+      if (!response.ok) {
+        setFormError(data.error || "Unable to delete category right now.");
+        return;
+      }
+
+      setCategories((current) => current.filter((category) => category.id !== categoryId));
+
+      if (editingId === categoryId) {
+        resetForm();
+      }
+    } catch {
+      setFormError("Unexpected error. Please try again.");
+    } finally {
+      setDeletingId(null);
+    }
+  };
+}
+
+/**
+ * Client hook that manages category CRUD state, editing mode, validation errors, and grouping.
+ *
+ * @param {Array&lt;Record&lt;string, unknown>>} initialCategories
+ * @returns {{
+ *   deletingId: string | null,
+ *   editingId: string | null,
+ *   fieldErrors: Record&lt;string, string[]>,
+ *   formData: Record&lt;string, unknown>,
+ *   formError: string,
+ *   groupedCategories: Record&lt;string, Array&lt;Record&lt;string, unknown>>>,
+ *   handleDelete: (categoryId: string) => Promise&lt;void>,
+ *   handleEdit: (category: Record&lt;string, unknown>) => void,
+ *   handleInputChange: (event: Event) => void,
+ *   handleSubmit: (event: SubmitEvent) => Promise&lt;void>,
+ *   isSubmitting: boolean,
+ *   resetForm: () => void
+ * }}
+ */
+export default function useCategoriesManager(initialCategories) {
+  const [categories, setCategories] = useState(initialCategories);
+  const [formData, setFormData] = useState(initialForm);
+  const [fieldErrors, setFieldErrors] = useState(initialErrors);
+  const [formError, setFormError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
+  const groupedCategories = createGroupedCategories(categories);
+  const { handleEdit, handleInputChange, resetForm } = createFormHandlers({
+    setEditingId,
+    setFieldErrors,
+    setFormData,
+    setFormError,
+  });
+  const handleSubmit = createSubmitHandler({
+    editingId,
+    formData,
+    resetForm,
+    setCategories,
+    setFieldErrors,
+    setFormError,
+    setIsSubmitting,
+  });
+  const handleDelete = createDeleteHandler({
+    editingId,
+    resetForm,
+    setCategories,
+    setDeletingId,
+    setFormError,
+  });
+
+  return {
+    deletingId,
+    editingId,
+    fieldErrors,
+    formData,
+    formError,
+    groupedCategories,
+    handleDelete,
+    handleEdit,
+    handleInputChange,
+    handleSubmit,
+    isSubmitting,
+    resetForm,
+  };
+}
+
+function sortCategories(left, right) {
+  if (left.type !== right.type) {
+    return left.type.localeCompare(right.type);
+  }
+
+  return left.name.localeCompare(right.name);
+}
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Global</h3><ul><li><a href="global.html"></a></li><li><a href="global.html#DELETE">DELETE</a></li><li><a href="global.html#GET">GET</a></li><li><a href="global.html#PAGE_SIZE">PAGE_SIZE</a></li><li><a href="global.html#POST">POST</a></li><li><a href="global.html#PUT">PUT</a></li><li><a href="global.html#buildSummaryDateRange">buildSummaryDateRange</a></li><li><a href="global.html#buildTransactionDateFilter">buildTransactionDateFilter</a></li><li><a href="global.html#buildTransactionOrderBy">buildTransactionOrderBy</a></li><li><a href="global.html#buildTransactionWhere">buildTransactionWhere</a></li><li><a href="global.html#categorySchema">categorySchema</a></li><li><a href="global.html#config">config</a></li><li><a href="global.html#createInitialFormState">createInitialFormState</a></li><li><a href="global.html#formatDate">formatDate</a></li><li><a href="global.html#formatDateInput">formatDateInput</a></li><li><a href="global.html#formatMoney">formatMoney</a></li><li><a href="global.html#formatPeriodLabel">formatPeriodLabel</a></li><li><a href="global.html#getDashboardSummary">getDashboardSummary</a></li><li><a href="global.html#getOwnedCategory">getOwnedCategory</a></li><li><a href="global.html#getServerAuthSession">getServerAuthSession</a></li><li><a href="global.html#getSessionUser">getSessionUser</a></li><li><a href="global.html#getSummaryPeriodRange">getSummaryPeriodRange</a></li><li><a href="global.html#getTransactionPeriodRange">getTransactionPeriodRange</a></li><li><a href="global.html#getVisiblePages">getVisiblePages</a></li><li><a href="global.html#listTransactions">listTransactions</a></li><li><a href="global.html#loginSchema">loginSchema</a></li><li><a href="global.html#metadata">metadata</a></li><li><a href="global.html#middleware">middleware</a></li><li><a href="global.html#registerSchema">registerSchema</a></li><li><a href="global.html#requireSession">requireSession</a></li><li><a href="global.html#serializeTransaction">serializeTransaction</a></li><li><a href="global.html#toDateInputValue">toDateInputValue</a></li><li><a href="global.html#transactionSchema">transactionSchema</a></li><li><a href="global.html#transactionSelect">transactionSelect</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a>
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>
