@@ -21,8 +21,9 @@ const navItems = [
     active: true,
   },
   {
+    href: "/analytics",
     label: "Analytics",
-    active: false,
+    active: true,
   },
 ];
 
