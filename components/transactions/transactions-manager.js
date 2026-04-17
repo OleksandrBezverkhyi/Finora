@@ -320,6 +320,7 @@ export default function TransactionsManager({
                   <input
                     name="date"
                     type="date"
+                  lang="en-GB"
                     value={formData.date}
                     onChange={handleFormChange}
                     className="w-full rounded-2xl border border-[var(--border)] bg-white px-4 py-3 text-base text-[var(--foreground)] outline-none transition focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-soft)]"
@@ -417,6 +418,7 @@ export default function TransactionsManager({
                   <input
                     name="from"
                     type="date"
+                  lang="en-GB"
                     value={filters.from}
                     onChange={handleFilterChange}
                     className="w-full rounded-2xl border border-[var(--border)] bg-white px-4 py-3 text-base text-[var(--foreground)] outline-none transition focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-soft)]"
@@ -430,6 +432,7 @@ export default function TransactionsManager({
                   <input
                     name="to"
                     type="date"
+                  lang="en-GB"
                     value={filters.to}
                     onChange={handleFilterChange}
                     className="w-full rounded-2xl border border-[var(--border)] bg-white px-4 py-3 text-base text-[var(--foreground)] outline-none transition focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-soft)]"
@@ -697,7 +700,7 @@ function formatDateInput(date) {
 }
 
 function formatDate(value) {
-  return new Intl.DateTimeFormat("uk-UA", {
+  return new Intl.DateTimeFormat("en-GB", {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
@@ -705,9 +708,10 @@ function formatDate(value) {
 }
 
 function formatMoney(amount) {
-  return new Intl.NumberFormat("uk-UA", {
+  return new Intl.NumberFormat("en-GB", {
     style: "currency",
     currency: "UAH",
+    currencyDisplay: "narrowSymbol",
     minimumFractionDigits: 2,
   }).format(Number(amount));
 }

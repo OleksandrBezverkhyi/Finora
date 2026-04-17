@@ -118,6 +118,7 @@ export default function DashboardOverview({ initialSummary }) {
                 <input
                   name="from"
                   type="date"
+                  lang="en-GB"
                   value={customRange.from}
                   onChange={handleRangeChange}
                   className="rounded-2xl border border-[var(--border)] bg-white px-4 py-2 text-sm text-[var(--foreground)] outline-none transition focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-soft)]"
@@ -125,6 +126,7 @@ export default function DashboardOverview({ initialSummary }) {
                 <input
                   name="to"
                   type="date"
+                  lang="en-GB"
                   value={customRange.to}
                   onChange={handleRangeChange}
                   className="rounded-2xl border border-[var(--border)] bg-white px-4 py-2 text-sm text-[var(--foreground)] outline-none transition focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-soft)]"
@@ -277,15 +279,16 @@ function SummaryCard({ label, value, hint }) {
 }
 
 function formatMoney(value) {
-  return new Intl.NumberFormat("uk-UA", {
+  return new Intl.NumberFormat("en-GB", {
     style: "currency",
     currency: "UAH",
+    currencyDisplay: "narrowSymbol",
     minimumFractionDigits: 2,
   }).format(Number(value));
 }
 
 function formatDate(value) {
-  return new Intl.DateTimeFormat("uk-UA", {
+  return new Intl.DateTimeFormat("en-GB", {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
