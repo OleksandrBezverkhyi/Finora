@@ -30,6 +30,11 @@ const navItems = [
     label: "Budgets",
     active: true,
   },
+  {
+    href: "/goals",
+    label: "Goals",
+    active: true,
+  },
 ];
 
 async function handleSignOut() {
