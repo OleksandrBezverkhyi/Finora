@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { format, isValid, parse, parseISO } from "date-fns";
 import {
   Bar,
@@ -28,14 +28,29 @@ const periodOptions = [
 const incomeColor = "#0F766E";
 const expenseColor = "#EA580C";
 
+const emptyCustomRange = {
+  fromDay: "",
+  fromMonth: "",
+  fromYear: "",
+  toDay: "",
+  toMonth: "",
+  toYear: "",
+};
+
 export default function AnalyticsOverview({ initialTrend, initialByCategory, initialCompare }) {
   const [selectedPeriod, setSelectedPeriod] = useState(initialTrend.period.type || "month");
-  const [customRange, setCustomRange] = useState({ from: "", to: "" });
+  const [customRange, setCustomRange] = useState(emptyCustomRange);
   const [trend, setTrend] = useState(initialTrend);
   const [byCategory, setByCategory] = useState(initialByCategory);
   const [compare, setCompare] = useState(initialCompare);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const fromDayRef = useRef(null);
+  const fromMonthRef = useRef(null);
+  const fromYearRef = useRef(null);
+  const toDayRef = useRef(null);
+  const toMonthRef = useRef(null);
+  const toYearRef = useRef(null);
 
   const trendData = trend.points.map((point) => ({
     ...point,
@@ -105,31 +120,81 @@ export default function AnalyticsOverview({ initialTrend, initialByCategory, ini
     setSelectedPeriod(period);
 
     if (period !== "custom") {
-      setCustomRange({ from: "", to: "" });
+      setCustomRange(emptyCustomRange);
       await loadAnalytics({ period });
     }
   }
 
-  function handleRangeChange(event) {
+  function handleRangePartChange(event) {
     const { name, value } = event.target;
+    const digitsOnly = value.replace(/\D/g, "");
+    const isYearField = name.endsWith("Year");
+    const maxLength = isYearField ? 4 : 2;
+    const rawValue = digitsOnly.slice(0, maxLength);
+    const nextValue = isYearField ? rawValue : normalizeDatePart(name, rawValue);
 
     setCustomRange((current) => ({
       ...current,
-      [name]: value,
+      [name]: nextValue,
     }));
+    setError("");
+
+    if (!isYearField && rawValue.length === 2) {
+      getNextDatePartRef(name, {
+        fromMonthRef,
+        fromYearRef,
+        toMonthRef,
+        toYearRef,
+      })?.current?.focus();
+    }
+  }
+
+  function handleRangePartFocus(event) {
+    event.target.select();
+  }
+
+  function handleRangePartBlur(event) {
+    const { name, value } = event.target;
+
+    if (name.endsWith("Day") || name.endsWith("Month")) {
+      const normalizedValue = normalizeDatePart(name, value, { padSingleDigit: true });
+
+      setCustomRange((current) => ({
+        ...current,
+        [name]: normalizedValue,
+      }));
+    }
   }
 
   async function applyCustomRange() {
-    if (!customRange.from || !customRange.to) {
+    const hasCompleteFrom = Boolean(
+      customRange.fromDay && customRange.fromMonth && customRange.fromYear
+    );
+    const hasCompleteTo = Boolean(customRange.toDay && customRange.toMonth && customRange.toYear);
+
+    if (!hasCompleteFrom || !hasCompleteTo) {
       setError("Choose both from and to dates for a custom analytics range.");
       return;
     }
 
-    const from = parseCustomDateInput(customRange.from);
-    const to = parseCustomDateInput(customRange.to);
+    const from = parseDateParts({
+      day: customRange.fromDay,
+      month: customRange.fromMonth,
+      year: customRange.fromYear,
+    });
+    const to = parseDateParts({
+      day: customRange.toDay,
+      month: customRange.toMonth,
+      year: customRange.toYear,
+    });
 
     if (!from || !to) {
-      setError("Use the day-first format DD.MM.YYYY or DD/MM/YYYY for custom dates.");
+      setError("Please enter valid custom dates.");
+      return;
+    }
+
+    if (from > to) {
+      setError("The start date must be earlier than or equal to the end date.");
       return;
     }
 
@@ -175,30 +240,54 @@ export default function AnalyticsOverview({ initialTrend, initialByCategory, ini
             </div>
 
             {selectedPeriod === "custom" ? (
-              <div className="flex flex-col gap-3 sm:flex-row">
-                <input
-                  name="from"
-                  type="text"
-                  inputMode="numeric"
-                  placeholder="dd / mm / yyyy"
-                  value={customRange.from}
-                  onChange={handleRangeChange}
-                  className="w-full rounded-2xl border border-[var(--border)] bg-white px-4 py-3 text-base text-[var(--foreground)] outline-none transition placeholder:text-[var(--muted)]/70 focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-soft)]"
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+                <DateSegmentField
+                  label="From"
+                  partNames={{
+                    day: "fromDay",
+                    month: "fromMonth",
+                    year: "fromYear",
+                  }}
+                  values={{
+                    day: customRange.fromDay,
+                    month: customRange.fromMonth,
+                    year: customRange.fromYear,
+                  }}
+                  refs={{
+                    day: fromDayRef,
+                    month: fromMonthRef,
+                    year: fromYearRef,
+                  }}
+                  onChange={handleRangePartChange}
+                  onFocus={handleRangePartFocus}
+                  onBlur={handleRangePartBlur}
                 />
-                <input
-                  name="to"
-                  type="text"
-                  inputMode="numeric"
-                  placeholder="dd / mm / yyyy"
-                  value={customRange.to}
-                  onChange={handleRangeChange}
-                  className="w-full rounded-2xl border border-[var(--border)] bg-white px-4 py-3 text-base text-[var(--foreground)] outline-none transition placeholder:text-[var(--muted)]/70 focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-soft)]"
+                <DateSegmentField
+                  label="To"
+                  partNames={{
+                    day: "toDay",
+                    month: "toMonth",
+                    year: "toYear",
+                  }}
+                  values={{
+                    day: customRange.toDay,
+                    month: customRange.toMonth,
+                    year: customRange.toYear,
+                  }}
+                  refs={{
+                    day: toDayRef,
+                    month: toMonthRef,
+                    year: toYearRef,
+                  }}
+                  onChange={handleRangePartChange}
+                  onFocus={handleRangePartFocus}
+                  onBlur={handleRangePartBlur}
                 />
                 <button
                   type="button"
                   onClick={applyCustomRange}
                   disabled={isLoading}
-                  className="rounded-full bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--accent-strong)] disabled:cursor-not-allowed disabled:opacity-70"
+                  className="rounded-full bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--accent-strong)] disabled:cursor-not-allowed disabled:opacity-70 sm:self-end"
                 >
                   {isLoading ? "Loading..." : "Apply"}
                 </button>
@@ -428,6 +517,59 @@ function TrendTooltip({ active, payload, label }) {
   );
 }
 
+function DateSegmentField({ label, partNames, values, refs, onChange, onFocus, onBlur }) {
+  return (
+    <div className="w-full space-y-2 sm:max-w-[15rem]">
+      <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--muted)]">
+        {label}
+      </span>
+      <div className="flex w-full items-center rounded-2xl border border-[var(--border)] bg-white px-4 py-3 transition focus-within:border-[var(--accent)] focus-within:ring-4 focus-within:ring-[var(--accent-soft)]">
+        <input
+          ref={refs.day}
+          name={partNames.day}
+          type="text"
+          inputMode="numeric"
+          maxLength="2"
+          placeholder="dd"
+          value={values.day}
+          onChange={onChange}
+          onFocus={onFocus}
+          onBlur={onBlur}
+          className="w-10 border-0 bg-transparent p-0 text-center text-base text-[var(--foreground)] outline-none placeholder:text-[var(--muted)]/70"
+        />
+        <span className="px-2 text-base font-semibold text-[var(--muted)]">/</span>
+        <input
+          ref={refs.month}
+          name={partNames.month}
+          type="text"
+          inputMode="numeric"
+          maxLength="2"
+          placeholder="mm"
+          value={values.month}
+          onChange={onChange}
+          onFocus={onFocus}
+          onBlur={onBlur}
+          className="w-10 border-0 bg-transparent p-0 text-center text-base text-[var(--foreground)] outline-none placeholder:text-[var(--muted)]/70"
+        />
+        <span className="px-2 text-base font-semibold text-[var(--muted)]">/</span>
+        <input
+          ref={refs.year}
+          name={partNames.year}
+          type="text"
+          inputMode="numeric"
+          maxLength="4"
+          placeholder="yyyy"
+          value={values.year}
+          onChange={onChange}
+          onFocus={onFocus}
+          onBlur={onBlur}
+          className="w-16 border-0 bg-transparent p-0 text-center text-base text-[var(--foreground)] outline-none placeholder:text-[var(--muted)]/70"
+        />
+      </div>
+    </div>
+  );
+}
+
 function CategoryTooltip({ active, payload }) {
   if (!active || !payload || payload.length === 0) {
     return null;
@@ -444,15 +586,66 @@ function CategoryTooltip({ active, payload }) {
   );
 }
 
-function parseCustomDateInput(value) {
-  const normalized = value.trim().replace(/\//g, ".");
-  const parsed = parse(normalized, "dd.MM.yyyy", new Date());
+function parseDateParts({ day, month, year }) {
+  const normalizedDay = day.trim();
+  const normalizedMonth = month.trim();
+  const normalizedYear = year.trim();
+
+  if (!normalizedDay || !normalizedMonth || !normalizedYear) {
+    return null;
+  }
+
+  const paddedDay = normalizedDay.padStart(2, "0");
+  const paddedMonth = normalizedMonth.padStart(2, "0");
+  const parsed = parse(
+    normalizedYear + "-" + paddedMonth + "-" + paddedDay,
+    "yyyy-MM-dd",
+    new Date()
+  );
 
   if (!isValid(parsed)) {
     return null;
   }
 
   return format(parsed, "yyyy-MM-dd");
+}
+
+function normalizeDatePart(name, value, options = {}) {
+  const digitsOnly = value.replace(/\D/g, "");
+
+  if (!digitsOnly) {
+    return "";
+  }
+
+  const numericValue = Number(digitsOnly);
+  const maxValue = name.endsWith("Month") ? 12 : 31;
+  const clampedValue = Math.min(Math.max(numericValue, 1), maxValue);
+
+  if (digitsOnly.length >= 2 || options.padSingleDigit) {
+    return String(clampedValue).padStart(2, "0");
+  }
+
+  return digitsOnly;
+}
+
+function getNextDatePartRef(name, refs) {
+  if (name === "fromDay") {
+    return refs.fromMonthRef;
+  }
+
+  if (name === "fromMonth") {
+    return refs.fromYearRef;
+  }
+
+  if (name === "toDay") {
+    return refs.toMonthRef;
+  }
+
+  if (name === "toMonth") {
+    return refs.toYearRef;
+  }
+
+  return null;
 }
 
 function formatMoney(value) {
