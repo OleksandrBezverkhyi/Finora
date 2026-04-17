@@ -25,6 +25,11 @@ const navItems = [
     label: "Analytics",
     active: true,
   },
+  {
+    href: "/budgets",
+    label: "Budgets",
+    active: true,
+  },
 ];
 
 async function handleSignOut() {
