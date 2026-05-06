@@ -1,16 +1,29 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
-const periodOptions = [
-  { value: "day", label: "Day" },
-  { value: "week", label: "Week" },
-  { value: "month", label: "Month" },
-  { value: "custom", label: "Custom" },
-];
+import DayFirstDateInput from "@/components/common/day-first-date-input";
+import { useLocale } from "@/components/common/locale-provider";
+import {
+  formatDateLocalized,
+  formatMoneyLocalized,
+  formatPlural,
+  localizeRecommendationAlert,
+  localizeRecommendationSource,
+} from "@/lib/i18n";
 
 export default function DashboardOverview({ initialSummary, initialRecommendations }) {
+  const { locale, messages, translateErrorMessage } = useLocale();
+  const periodOptions = useMemo(
+    () => [
+      { value: "day", label: messages.periods.day },
+      { value: "week", label: messages.periods.week },
+      { value: "month", label: messages.periods.month },
+      { value: "custom", label: messages.periods.custom },
+    ],
+    [messages]
+  );
   const [selectedPeriod, setSelectedPeriod] = useState(initialSummary.period.type || "month");
   const [customRange, setCustomRange] = useState({
     from: toDateInputValue(initialSummary.period.from),
@@ -51,9 +64,11 @@ export default function DashboardOverview({ initialSummary, initialRecommendatio
 
       if (!summaryResponse.ok || !recommendationsResponse.ok) {
         setError(
-          summaryData.error ||
-            recommendationsData.error ||
-            "Unable to load dashboard data right now."
+          translateErrorMessage(
+            summaryData.error ||
+              recommendationsData.error ||
+              "Unable to load dashboard data right now."
+          )
         );
         return;
       }
@@ -61,7 +76,7 @@ export default function DashboardOverview({ initialSummary, initialRecommendatio
       setSummary(summaryData);
       setRecommendations(recommendationsData);
     } catch {
-      setError("Unexpected error. Please try again.");
+      setError(translateErrorMessage("Unexpected error. Please try again."));
     } finally {
       setIsLoading(false);
     }
@@ -78,34 +93,25 @@ export default function DashboardOverview({ initialSummary, initialRecommendatio
 
   function handleRangeChange(event) {
     const { name, value } = event.target;
-
-    setCustomRange((current) => ({
-      ...current,
-      [name]: value,
-    }));
+    setCustomRange((current) => ({ ...current, [name]: value }));
   }
 
   async function applyCustomRange() {
-    await loadDashboardData({
-      period: "custom",
-      from: customRange.from,
-      to: customRange.to,
-    });
+    await loadDashboardData({ period: "custom", from: customRange.from, to: customRange.to });
   }
+
+  const localizedSources = recommendations.sources.map((source) => localizeRecommendationSource(source, locale));
 
   return (
     <div className="space-y-8">
       <section className="glass-panel rounded-[2rem] p-6 sm:p-8">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div className="space-y-3">
-            <p className="eyebrow">Overview</p>
+            <p className="eyebrow">{messages.common.overview}</p>
             <h2 className="text-3xl font-semibold tracking-tight text-[var(--foreground)]">
-              Your financial picture at a glance
+              {messages.dashboard.title}
             </h2>
-            <p className="muted max-w-2xl text-sm leading-6">
-              Review income, expenses, balance, spending categories, and your latest activity for
-              any period you choose.
-            </p>
+            <p className="muted max-w-2xl text-sm leading-6">{messages.dashboard.description}</p>
           </div>
 
           <div className="flex flex-col gap-3 lg:items-end">
@@ -128,18 +134,14 @@ export default function DashboardOverview({ initialSummary, initialRecommendatio
 
             {selectedPeriod === "custom" ? (
               <div className="flex flex-col gap-3 sm:flex-row">
-                <input
+                <DayFirstDateInput
                   name="from"
-                  type="date"
-                  lang="en-GB"
                   value={customRange.from}
                   onChange={handleRangeChange}
                   className="rounded-2xl border border-[var(--border)] bg-white px-4 py-2 text-sm text-[var(--foreground)] outline-none transition focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-soft)]"
                 />
-                <input
+                <DayFirstDateInput
                   name="to"
-                  type="date"
-                  lang="en-GB"
                   value={customRange.to}
                   onChange={handleRangeChange}
                   className="rounded-2xl border border-[var(--border)] bg-white px-4 py-2 text-sm text-[var(--foreground)] outline-none transition focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-soft)]"
@@ -150,12 +152,12 @@ export default function DashboardOverview({ initialSummary, initialRecommendatio
                   disabled={isLoading}
                   className="rounded-full bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--accent-strong)] disabled:cursor-not-allowed disabled:opacity-70"
                 >
-                  {isLoading ? "Loading..." : "Apply"}
+                  {isLoading ? messages.common.loading : messages.common.apply}
                 </button>
               </div>
             ) : (
               <p className="text-sm text-[var(--muted)]">
-                {isLoading ? "Refreshing dashboard..." : formatPeriodLabel(summary.period)}
+                {isLoading ? messages.dashboard.refreshing : formatPeriodLabel(summary.period, locale, messages)}
               </p>
             )}
           </div>
@@ -171,50 +173,40 @@ export default function DashboardOverview({ initialSummary, initialRecommendatio
       <section className="grid gap-5 xl:grid-cols-[1.2fr_0.8fr]">
         <div className="grid gap-5 sm:grid-cols-2">
           <SummaryCard
-            label="Income"
-            value={formatMoney(summary.totals.income)}
-            hint="Money received during the selected period"
+            label={messages.common.income}
+            value={formatMoneyLocalized(summary.totals.income, locale)}
+            hint={messages.dashboard.incomeHint}
           />
           <SummaryCard
-            label="Expenses"
-            value={formatMoney(summary.totals.expense)}
-            hint="Money spent during the selected period"
+            label={messages.common.expense}
+            value={formatMoneyLocalized(summary.totals.expense, locale)}
+            hint={messages.dashboard.expenseHint}
           />
           <div className="glass-panel rounded-[1.75rem] p-6 sm:col-span-2">
-            <p className="text-sm font-medium text-[var(--muted)]">Balance</p>
+            <p className="text-sm font-medium text-[var(--muted)]">{messages.common.balance}</p>
             <p className="mt-6 text-4xl font-semibold tracking-tight text-[var(--foreground)]">
-              {formatMoney(summary.totals.balance)}
+              {formatMoneyLocalized(summary.totals.balance, locale)}
             </p>
-            <p className="mt-3 text-sm text-[var(--muted)]">
-              Income minus expenses for the current selection
-            </p>
+            <p className="mt-3 text-sm text-[var(--muted)]">{messages.dashboard.balanceHint}</p>
           </div>
         </div>
 
         <div className="glass-panel rounded-[1.75rem] p-6">
-          <p className="text-sm font-medium text-[var(--muted)]">Top expense categories</p>
+          <p className="text-sm font-medium text-[var(--muted)]">{messages.dashboard.topExpenseCategories}</p>
           <div className="mt-6 space-y-4">
             {summary.topExpenseCategories.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-[var(--border)] px-4 py-5 text-sm text-[var(--muted)]">
-                No expense categories to show for this period yet.
+                {messages.dashboard.noTopExpenseCategories}
               </div>
             ) : (
               summary.topExpenseCategories.map((category, index) => (
-                <div
-                  key={category.categoryId}
-                  className="flex items-center justify-between rounded-2xl border border-[var(--border)] bg-white/70 px-4 py-3"
-                >
+                <div key={category.categoryId} className="flex items-center justify-between rounded-2xl border border-[var(--border)] bg-white/70 px-4 py-3">
                   <div className="flex items-center gap-3">
                     <span className="text-sm font-semibold text-[var(--muted)]">#{index + 1}</span>
-                    <span
-                      className="h-3.5 w-3.5 rounded-full border border-black/5"
-                      style={{ backgroundColor: category.color || "#C2410C" }}
-                    />
+                    <span className="h-3.5 w-3.5 rounded-full border border-black/5" style={{ backgroundColor: category.color || "#C2410C" }} />
                     <span className="font-medium text-[var(--foreground)]">{category.name}</span>
                   </div>
-                  <span className="text-sm font-semibold text-[var(--foreground)]">
-                    {formatMoney(category.amount)}
-                  </span>
+                  <span className="text-sm font-semibold text-[var(--foreground)]">{formatMoneyLocalized(category.amount, locale)}</span>
                 </div>
               ))
             )}
@@ -225,53 +217,52 @@ export default function DashboardOverview({ initialSummary, initialRecommendatio
       <section className="glass-panel rounded-[1.75rem] p-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-sm font-medium text-[var(--muted)]">Alerts and recommendations</p>
-            <p className="mt-2 text-sm text-[var(--muted)]">
-              Budget pressure, spending spikes, and goal pacing signals for the selected period.
-            </p>
+            <p className="text-sm font-medium text-[var(--muted)]">{messages.dashboard.alertsTitle}</p>
+            <p className="mt-2 text-sm text-[var(--muted)]">{messages.dashboard.alertsDescription}</p>
           </div>
           <span className="rounded-full border border-[var(--border)] bg-white/80 px-3 py-1 text-sm font-medium text-[var(--foreground)]">
-            {recommendations.alerts.length} alerts
+            {locale === "uk"
+              ? `${recommendations.alerts.length} ${formatPlural(locale, recommendations.alerts.length, {
+                  one: "попередження",
+                  few: "попередження",
+                  many: "попереджень",
+                  other: "alerts",
+                })}`
+              : `${recommendations.alerts.length} ${messages.dashboard.alertsCount}`}
           </span>
         </div>
 
         <div className="mt-6 space-y-3">
           {recommendations.alerts.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-[var(--border)] px-4 py-5 text-sm text-[var(--muted)]">
-              No active alerts for this period. Your budgets, spending trend, and goal pacing look stable.
+              {messages.dashboard.noAlerts}
             </div>
           ) : (
-            recommendations.alerts.map((alert) => (
-              <article
-                key={alert.id}
-                className={
-                  "rounded-2xl border px-4 py-4 " +
-                  getAlertCardClass(alert.severity)
-                }
-              >
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                  <div className="space-y-2">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className={getAlertBadgeClass(alert.severity)}>{formatAlertType(alert.type)}</span>
-                      <span className="text-xs font-medium text-[var(--muted)]">
-                        {formatSourceNames(alert.sourceIds, recommendations.sources)}
-                      </span>
+            recommendations.alerts.map((alert) => {
+              const localizedAlert = localizeRecommendationAlert(alert, locale);
+              return (
+                <article key={alert.id} className={"rounded-2xl border px-4 py-4 " + getAlertCardClass(alert.severity)}>
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="space-y-2">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className={getAlertBadgeClass(alert.severity)}>{formatAlertType(alert.type, messages)}</span>
+                        <span className="text-xs font-medium text-[var(--muted)]">
+                          {formatSourceNames(alert.sourceIds, localizedSources)}
+                        </span>
+                      </div>
+                      <h3 className="text-base font-semibold text-[var(--foreground)]">{localizedAlert.title}</h3>
+                      <p className="text-sm leading-6 text-[var(--muted)]">{localizedAlert.message}</p>
                     </div>
-                    <h3 className="text-base font-semibold text-[var(--foreground)]">{alert.title}</h3>
-                    <p className="text-sm leading-6 text-[var(--muted)]">{alert.message}</p>
-                  </div>
 
-                  {alert.href ? (
-                    <Link
-                      href={alert.href}
-                      className="inline-flex rounded-full border border-[var(--border)] bg-white/85 px-4 py-2 text-sm font-semibold text-[var(--foreground)] transition hover:border-[var(--accent)] hover:text-[var(--accent-strong)]"
-                    >
-                      {alert.actionLabel || "Open"}
-                    </Link>
-                  ) : null}
-                </div>
-              </article>
-            ))
+                    {alert.href ? (
+                      <Link href={alert.href} className="inline-flex rounded-full border border-[var(--border)] bg-white/85 px-4 py-2 text-sm font-semibold text-[var(--foreground)] transition hover:border-[var(--accent)] hover:text-[var(--accent-strong)]">
+                        {localizedAlert.actionLabel || messages.common.open}
+                      </Link>
+                    ) : null}
+                  </div>
+                </article>
+              );
+            })
           )}
         </div>
       </section>
@@ -279,49 +270,41 @@ export default function DashboardOverview({ initialSummary, initialRecommendatio
       <section className="glass-panel rounded-[1.75rem] p-6">
         <div className="flex items-center justify-between gap-4">
           <div>
-            <p className="text-sm font-medium text-[var(--muted)]">Recent transactions</p>
-            <p className="mt-2 text-sm text-[var(--muted)]">
-              Your latest recorded income and expense operations.
-            </p>
+            <p className="text-sm font-medium text-[var(--muted)]">{messages.dashboard.recentTransactions}</p>
+            <p className="mt-2 text-sm text-[var(--muted)]">{messages.dashboard.recentTransactionsDescription}</p>
           </div>
           <span className="rounded-full border border-[var(--border)] bg-white/80 px-3 py-1 text-sm font-medium text-[var(--foreground)]">
-            {summary.recentTransactions.length} items
+            {locale === "uk"
+              ? `${summary.recentTransactions.length} ${formatPlural(locale, summary.recentTransactions.length, {
+                  one: "елемент",
+                  few: "елементи",
+                  many: "елементів",
+                  other: "items",
+                })}`
+              : `${summary.recentTransactions.length} items`}
           </span>
         </div>
 
         <div className="mt-6 space-y-3">
           {summary.recentTransactions.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-[var(--border)] px-4 py-5 text-sm text-[var(--muted)]">
-              There are no transactions in this period yet.
+              {messages.dashboard.noTransactions}
             </div>
           ) : (
             summary.recentTransactions.map((transaction) => (
-              <div
-                key={transaction.id}
-                className="flex flex-col gap-4 rounded-2xl border border-[var(--border)] bg-white/75 px-4 py-4 sm:flex-row sm:items-center sm:justify-between"
-              >
+              <div key={transaction.id} className="flex flex-col gap-4 rounded-2xl border border-[var(--border)] bg-white/75 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-3">
-                  <span
-                    className="h-3.5 w-3.5 rounded-full border border-black/5"
-                    style={{ backgroundColor: transaction.category.color || "#0F766E" }}
-                  />
+                  <span className="h-3.5 w-3.5 rounded-full border border-black/5" style={{ backgroundColor: transaction.category.color || "#0F766E" }} />
                   <div>
-                    <p className="font-medium text-[var(--foreground)]">
-                      {transaction.category.name}
-                    </p>
-                    <p className="mt-1 text-sm text-[var(--muted)]">
-                      {transaction.comment || "No comment"}
-                    </p>
+                    <p className="font-medium text-[var(--foreground)]">{transaction.category.name}</p>
+                    <p className="mt-1 text-sm text-[var(--muted)]">{transaction.comment || messages.common.noComment}</p>
                   </div>
                 </div>
 
                 <div className="text-right">
-                  <p className="font-semibold text-[var(--foreground)]">
-                    {formatMoney(transaction.amount)}
-                  </p>
+                  <p className="font-semibold text-[var(--foreground)]">{formatMoneyLocalized(transaction.amount, locale)}</p>
                   <p className="mt-1 text-sm text-[var(--muted)]">
-                    {formatDate(transaction.date)} ·{" "}
-                    {transaction.type === "INCOME" ? "Income" : "Expense"}
+                    {formatDateLocalized(transaction.date, locale)} · {transaction.type === "INCOME" ? messages.common.income : messages.common.expense}
                   </p>
                 </div>
               </div>
@@ -337,90 +320,43 @@ function SummaryCard({ label, value, hint }) {
   return (
     <div className="glass-panel rounded-[1.75rem] p-6">
       <p className="text-sm font-medium text-[var(--muted)]">{label}</p>
-      <p className="mt-6 text-4xl font-semibold tracking-tight text-[var(--foreground)]">
-        {value}
-      </p>
+      <p className="mt-6 text-4xl font-semibold tracking-tight text-[var(--foreground)]">{value}</p>
       <p className="mt-3 text-sm text-[var(--muted)]">{hint}</p>
     </div>
   );
 }
 
-function formatMoney(value) {
-  return new Intl.NumberFormat("en-GB", {
-    style: "currency",
-    currency: "UAH",
-    currencyDisplay: "narrowSymbol",
-    minimumFractionDigits: 2,
-  }).format(Number(value));
-}
-
-function formatDate(value) {
-  return new Intl.DateTimeFormat("en-GB", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  }).format(new Date(value));
-}
-
-function formatPeriodLabel(period) {
-  const from = period.from ? formatDate(period.from) : "beginning";
-  const to = period.to ? formatDate(period.to) : "now";
-
+function formatPeriodLabel(period, locale, messages) {
+  const from = period.from ? formatDateLocalized(period.from, locale) : messages.common.startBeginning;
+  const to = period.to ? formatDateLocalized(period.to, locale) : messages.common.startNow;
   return `${from} - ${to}`;
 }
 
-function formatAlertType(type) {
-  if (type === "budget_exceeded") {
-    return "Budget";
-  }
-
-  if (type === "spending_spike") {
-    return "Trend";
-  }
-
-  if (type === "goal_overdue") {
-    return "Goal overdue";
-  }
-
-  return "Goal pace";
+function formatAlertType(type, messages) {
+  if (type === "budget_exceeded") return messages.dashboard.budgetType;
+  if (type === "spending_spike") return messages.dashboard.trendType;
+  if (type === "goal_overdue") return messages.dashboard.goalOverdueType;
+  return messages.dashboard.goalPaceType;
 }
 
 function formatSourceNames(sourceIds, sources) {
-  const sourceNames = sourceIds
-    .map((sourceId) => sources.find((source) => source.id === sourceId)?.name)
-    .filter(Boolean);
-
+  const sourceNames = sourceIds.map((sourceId) => sources.find((source) => source.id === sourceId)?.name).filter(Boolean);
   return sourceNames.join(" · ");
 }
 
 function getAlertCardClass(severity) {
-  if (severity === "high") {
-    return "border-rose-300 bg-rose-50/80";
-  }
-
-  if (severity === "medium") {
-    return "border-amber-300 bg-amber-50/80";
-  }
-
+  if (severity === "high") return "border-rose-300 bg-rose-50/80";
+  if (severity === "medium") return "border-amber-300 bg-amber-50/80";
   return "border-[var(--border)] bg-white/75";
 }
 
 function getAlertBadgeClass(severity) {
-  if (severity === "high") {
-    return "rounded-full border border-rose-200 bg-rose-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-rose-700";
-  }
-
-  if (severity === "medium") {
-    return "rounded-full border border-amber-200 bg-amber-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-amber-700";
-  }
-
+  if (severity === "high") return "rounded-full border border-rose-200 bg-rose-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-rose-700";
+  if (severity === "medium") return "rounded-full border border-amber-200 bg-amber-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-amber-700";
   return "rounded-full border border-[var(--border)] bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted)]";
 }
 
 function toDateInputValue(value) {
-  if (!value) {
-    return "";
-  }
-
+  if (!value) return "";
   return new Date(value).toISOString().slice(0, 10);
 }
