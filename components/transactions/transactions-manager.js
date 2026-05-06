@@ -247,7 +247,8 @@ export default function TransactionsManager({
               </p>
               <Link
                 href="/categories"
-                className="mt-4 inline-flex rounded-full bg-[var(--accent)] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[var(--accent-strong)]"
+                className="mt-4 inline-flex rounded-full bg-[var(--accent)] px-5 py-3 text-sm font-semibold !text-white transition hover:bg-[var(--accent-strong)] hover:!text-white focus:!text-white visited:!text-white"
+                style={{ color: "#ffffff" }}
               >
                 Open categories
               </Link>
