@@ -57,6 +57,8 @@ export default function TransactionsManager({
   const [fieldErrors, setFieldErrors] = useState(initialFieldErrors);
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
   const [formData, setFormData] = useState(() =>
     createInitialFormState(categories, initialTransactions[0]?.type)
   );
@@ -109,15 +111,25 @@ export default function TransactionsManager({
     }
   }
 
-  async function handleCreateTransaction(event) {
+  function resetForm() {
+    setEditingId(null);
+    setFormData(createInitialFormState(categories, formData.type));
+    setFormError("");
+    setFieldErrors(initialFieldErrors);
+  }
+
+  async function handleSubmit(event) {
     event.preventDefault();
     setIsSubmitting(true);
     setFormError("");
     setFieldErrors(initialFieldErrors);
 
+    const method = editingId ? "PUT" : "POST";
+    const url = editingId ? `/api/transactions/${editingId}` : "/api/transactions";
+
     try {
-      const response = await fetch("/api/transactions", {
-        method: "POST",
+      const response = await fetch(url, {
+        method,
         headers: {
           "Content-Type": "application/json",
         },
@@ -143,14 +155,54 @@ export default function TransactionsManager({
         return;
       }
 
-      const nextFormState = createInitialFormState(categories, formData.type);
-      setFormData(nextFormState);
-      await fetchTransactions(1, filters);
+      resetForm();
+      await fetchTransactions(editingId ? pagination.page : 1, filters);
     } catch (error) {
-      console.error("Create transaction failed", error);
+      console.error("Save transaction failed", error);
       setFormError("Unexpected error. Please try again.");
     } finally {
       setIsSubmitting(false);
+    }
+  }
+
+  function handleEdit(transaction) {
+    setEditingId(transaction.id);
+    setFormError("");
+    setFieldErrors(initialFieldErrors);
+    setFormData({
+      type: transaction.type,
+      categoryId: transaction.category.id,
+      amount: transaction.amount,
+      date: formatDateInput(new Date(transaction.date)),
+      comment: transaction.comment || "",
+    });
+  }
+
+  async function handleDelete(transactionId) {
+    setDeletingId(transactionId);
+    setListError("");
+
+    try {
+      const response = await fetch(`/api/transactions/${transactionId}`, {
+        method: "DELETE",
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        setListError(data.error || "Unable to delete transaction right now.");
+        return;
+      }
+
+      if (editingId === transactionId) {
+        resetForm();
+      }
+
+      await fetchTransactions(pagination.page, filters);
+    } catch (error) {
+      console.error("Delete transaction failed", error);
+      setListError("Unexpected error. Please try again.");
+    } finally {
+      setDeletingId(null);
     }
   }
 
@@ -227,9 +279,9 @@ export default function TransactionsManager({
       <div className="grid gap-6 xl:grid-cols-[0.92fr_1.08fr]">
         <section className="glass-panel rounded-[1.75rem] p-6 sm:p-8">
           <div className="space-y-3">
-            <p className="eyebrow">Add transaction</p>
+            <p className="eyebrow">{editingId ? "Edit transaction" : "Add transaction"}</p>
             <h2 className="text-3xl font-semibold tracking-tight text-[var(--foreground)]">
-              Create income and expense records
+              {editingId ? "Update income and expense record" : "Create income and expense records"}
             </h2>
             <p className="muted text-sm leading-6">
               Add each operation as soon as it happens to keep your balance and reports accurate.
@@ -247,13 +299,14 @@ export default function TransactionsManager({
               </p>
               <Link
                 href="/categories"
-                className="mt-4 inline-flex rounded-full bg-[var(--accent)] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[var(--accent-strong)]"
+                className="mt-4 inline-flex rounded-full bg-[var(--accent)] px-5 py-3 text-sm font-semibold !text-white transition hover:bg-[var(--accent-strong)] hover:!text-white focus:!text-white visited:!text-white"
+                style={{ color: "#ffffff" }}
               >
                 Open categories
               </Link>
             </div>
           ) : (
-            <form onSubmit={handleCreateTransaction} className="mt-8 space-y-5">
+            <form onSubmit={handleSubmit} className="mt-8 space-y-5">
               <label className="block space-y-2">
                 <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--muted)]">
                   Type
@@ -350,13 +403,30 @@ export default function TransactionsManager({
                 </div>
               ) : null}
 
-              <button
-                type="submit"
-                disabled={isSubmitting || !formCategories.length}
-                className="rounded-full bg-[var(--accent)] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[var(--accent-strong)] hover:shadow-[0_14px_30px_rgba(15,118,110,0.24)] disabled:cursor-not-allowed disabled:opacity-70"
-              >
-                {isSubmitting ? "Saving..." : "Add transaction"}
-              </button>
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <button
+                  type="submit"
+                  disabled={isSubmitting || !formCategories.length}
+                  className="rounded-full bg-[var(--accent)] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[var(--accent-strong)] hover:shadow-[0_14px_30px_rgba(15,118,110,0.24)] disabled:cursor-not-allowed disabled:opacity-70"
+                >
+                  {isSubmitting
+                    ? editingId
+                      ? "Saving..."
+                      : "Creating..."
+                    : editingId
+                      ? "Save changes"
+                      : "Add transaction"}
+                </button>
+                {editingId ? (
+                  <button
+                    type="button"
+                    onClick={resetForm}
+                    className="rounded-full border border-[var(--border)] bg-white px-5 py-3 text-sm font-semibold text-[var(--foreground)] transition hover:border-[var(--accent)] hover:text-[var(--accent-strong)]"
+                  >
+                    Cancel edit
+                  </button>
+                ) : null}
+              </div>
             </form>
           )}
         </section>
@@ -579,13 +649,14 @@ export default function TransactionsManager({
                 <th className="px-4 py-2">Category</th>
                 <th className="px-4 py-2">Comment</th>
                 <th className="px-4 py-2">Amount</th>
+                <th className="px-4 py-2">Actions</th>
               </tr>
             </thead>
             <tbody>
               {transactions.length === 0 ? (
                 <tr>
                   <td
-                    colSpan="5"
+                    colSpan="6"
                     className="rounded-2xl border border-dashed border-[var(--border)] px-4 py-10 text-center text-sm text-[var(--muted)]"
                   >
                     No transactions match the selected filters yet.
@@ -622,8 +693,27 @@ export default function TransactionsManager({
                     <td className="px-4 py-4 text-sm text-[var(--muted)]">
                       {transaction.comment || "No comment"}
                     </td>
-                    <td className="rounded-r-2xl px-4 py-4 text-sm font-semibold text-[var(--foreground)]">
+                    <td className="px-4 py-4 text-sm font-semibold text-[var(--foreground)]">
                       {formatMoney(transaction.amount)}
+                    </td>
+                    <td className="rounded-r-2xl px-4 py-4">
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleEdit(transaction)}
+                          className="rounded-full border border-[var(--border)] bg-white px-4 py-2 text-sm font-semibold text-[var(--foreground)] transition hover:border-[var(--accent)] hover:text-[var(--accent-strong)]"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(transaction.id)}
+                          disabled={deletingId === transaction.id}
+                          className="rounded-full border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 transition hover:border-rose-300 hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-70"
+                        >
+                          {deletingId === transaction.id ? "Deleting..." : "Delete"}
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))

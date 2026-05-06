@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 
 const statusOptions = [
   { value: "ACTIVE", label: "Active" },
@@ -17,22 +17,14 @@ const initialErrors = {
   status: [],
 };
 
-const emptyTargetDateFields = {
-  targetDateDay: "",
-  targetDateMonth: "",
-  targetDateYear: "",
-};
-
 const initialForm = {
   name: "",
   targetAmount: "",
   currentAmount: "0",
-  ...emptyTargetDateFields,
+  targetDate: "",
   note: "",
   status: "ACTIVE",
 };
-
-const currentYear = getCurrentYear();
 
 export default function GoalsManager({ initialGoalsData }) {
   const [goalsData, setGoalsData] = useState(initialGoalsData);
@@ -42,9 +34,6 @@ export default function GoalsManager({ initialGoalsData }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
-  const targetDateDayRef = useRef(null);
-  const targetDateMonthRef = useRef(null);
-  const targetDateYearRef = useRef(null);
 
   function resetForm() {
     setFormData(initialForm);
@@ -56,80 +45,15 @@ export default function GoalsManager({ initialGoalsData }) {
   function handleInputChange(event) {
     const { name, value } = event.target;
 
-    setFormData((current) => {
-      if (name === "status" && value === "ACTIVE") {
-        return {
-          ...current,
-          status: value,
-          targetDateYear: normalizeTargetDateYear(current.targetDateYear, {
-            enforceCurrentYear: true,
-          }),
-        };
-      }
-
-      return {
-        ...current,
-        [name]: value,
-      };
-    });
-  }
-
-  function handleTargetDatePartChange(event) {
-    const { name, value } = event.target;
-    const digitsOnly = value.replace(/\D/g, "");
-    const isYearField = name === "targetDateYear";
-    const maxLength = isYearField ? 4 : 2;
-    const rawValue = digitsOnly.slice(0, maxLength);
-    const nextValue = isYearField
-      ? normalizeTargetDateYear(rawValue, {
-          enforceCurrentYear: formData.status === "ACTIVE" && rawValue.length === 4,
-        })
-      : normalizeTargetDatePart(name, rawValue);
-
     setFormData((current) => ({
       ...current,
-      [name]: nextValue,
-    }));
-    setFieldErrors((current) => ({
-      ...current,
-      targetDate: [],
+      [name]: value,
     }));
 
-    if (!isYearField && rawValue.length === 2) {
-      if (name === "targetDateDay") {
-        targetDateMonthRef.current?.focus();
-      }
-
-      if (name === "targetDateMonth") {
-        targetDateYearRef.current?.focus();
-      }
-    }
-  }
-
-  function handleTargetDatePartFocus(event) {
-    event.target.select();
-  }
-
-  function handleTargetDatePartBlur(event) {
-    const { name, value } = event.target;
-
-    if (name === "targetDateDay" || name === "targetDateMonth") {
-      const normalizedValue = normalizeTargetDatePart(name, value, { padSingleDigit: true });
-
-      setFormData((current) => ({
+    if (name === "targetDate") {
+      setFieldErrors((current) => ({
         ...current,
-        [name]: normalizedValue,
-      }));
-    }
-
-    if (name === "targetDateYear") {
-      const normalizedValue = normalizeTargetDateYear(value, {
-        enforceCurrentYear: formData.status === "ACTIVE",
-      });
-
-      setFormData((current) => ({
-        ...current,
-        [name]: normalizedValue,
+        targetDate: [],
       }));
     }
   }
@@ -142,37 +66,9 @@ export default function GoalsManager({ initialGoalsData }) {
 
     const method = editingId ? "PUT" : "POST";
     const url = editingId ? "/api/goals/" + editingId : "/api/goals";
-    const parsedTargetDate = parseGoalDateParts({
-      day: formData.targetDateDay,
-      month: formData.targetDateMonth,
-      year: formData.targetDateYear,
-    });
-    const hasTargetDateInput = Boolean(
-      formData.targetDateDay || formData.targetDateMonth || formData.targetDateYear
-    );
-    const hasCompleteTargetDate = Boolean(
-      formData.targetDateDay && formData.targetDateMonth && formData.targetDateYear
-    );
+    const targetDate = formData.targetDate || "";
 
-    if (hasTargetDateInput && !hasCompleteTargetDate) {
-      setFieldErrors((current) => ({
-        ...current,
-        targetDate: ["Please complete the target date."],
-      }));
-      setIsSubmitting(false);
-      return;
-    }
-
-    if (hasCompleteTargetDate && !parsedTargetDate) {
-      setFieldErrors((current) => ({
-        ...current,
-        targetDate: ["Please enter a valid target date."],
-      }));
-      setIsSubmitting(false);
-      return;
-    }
-
-    if (parsedTargetDate && formData.status === "ACTIVE" && !isTodayOrFutureDate(parsedTargetDate)) {
+    if (targetDate && formData.status === "ACTIVE" && !isTodayOrFutureDate(targetDate)) {
       setFieldErrors((current) => ({
         ...current,
         targetDate: ["Active goals must use today or a future date."],
@@ -181,16 +77,9 @@ export default function GoalsManager({ initialGoalsData }) {
       return;
     }
 
-    const {
-      targetDateDay: _targetDateDay,
-      targetDateMonth: _targetDateMonth,
-      targetDateYear: _targetDateYear,
-      ...restFormData
-    } = formData;
-
     const payload = {
-      ...restFormData,
-      targetDate: parsedTargetDate || "",
+      ...formData,
+      targetDate,
     };
 
     try {
@@ -239,7 +128,7 @@ export default function GoalsManager({ initialGoalsData }) {
       name: goal.name,
       targetAmount: goal.targetAmount,
       currentAmount: goal.currentAmount,
-      ...getTargetDateFields(goal.targetDate),
+      targetDate: toDateInputValue(goal.targetDate),
       note: goal.note || "",
       status: goal.status,
     });
@@ -366,48 +255,17 @@ export default function GoalsManager({ initialGoalsData }) {
                 <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--muted)]">
                   Target date
                 </span>
-                <div className="flex w-full items-center rounded-2xl border border-[var(--border)] bg-white px-4 py-3 transition focus-within:border-[var(--accent)] focus-within:ring-4 focus-within:ring-[var(--accent-soft)]">
-                  <input
-                    ref={targetDateDayRef}
-                    name="targetDateDay"
-                    type="text"
-                    inputMode="numeric"
-                    maxLength="2"
-                    placeholder="dd"
-                    value={formData.targetDateDay}
-                    onChange={handleTargetDatePartChange}
-                    onFocus={handleTargetDatePartFocus}
-                    onBlur={handleTargetDatePartBlur}
-                    className="w-10 border-0 bg-transparent p-0 text-center text-base text-[var(--foreground)] outline-none placeholder:text-[var(--muted)]/70"
-                  />
-                  <span className="px-2 text-base font-semibold text-[var(--muted)]">/</span>
-                  <input
-                    ref={targetDateMonthRef}
-                    name="targetDateMonth"
-                    type="text"
-                    inputMode="numeric"
-                    maxLength="2"
-                    placeholder="mm"
-                    value={formData.targetDateMonth}
-                    onChange={handleTargetDatePartChange}
-                    onFocus={handleTargetDatePartFocus}
-                    onBlur={handleTargetDatePartBlur}
-                    className="w-10 border-0 bg-transparent p-0 text-center text-base text-[var(--foreground)] outline-none placeholder:text-[var(--muted)]/70"
-                  />
-                  <span className="px-2 text-base font-semibold text-[var(--muted)]">/</span>
-                  <input
-                    ref={targetDateYearRef}
-                    name="targetDateYear"
-                    type="text"
-                    inputMode="numeric"
-                    maxLength="4"
-                    placeholder="yyyy"
-                    value={formData.targetDateYear}
-                    onChange={handleTargetDatePartChange}
-                    onFocus={handleTargetDatePartFocus}
-                    className="w-16 border-0 bg-transparent p-0 text-center text-base text-[var(--foreground)] outline-none placeholder:text-[var(--muted)]/70"
-                  />
-                </div>
+                <input
+                  name="targetDate"
+                  type="date"
+                  lang="en-GB"
+                  value={formData.targetDate}
+                  onChange={handleInputChange}
+                  className={
+                    "w-full rounded-2xl border border-[var(--border)] bg-white px-4 py-3 text-base outline-none transition focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-soft)] " +
+                    (formData.targetDate ? "text-[var(--foreground)]" : "text-[var(--muted)]")
+                  }
+                />
                 {renderFieldError("targetDate")}
               </label>
 
@@ -660,87 +518,12 @@ function formatDate(value) {
   }).format(new Date(value));
 }
 
-function getTargetDateFields(value) {
+function toDateInputValue(value) {
   if (!value) {
-    return {
-      ...emptyTargetDateFields,
-    };
-  }
-
-  const date = new Date(value);
-
-  return {
-    targetDateDay: String(date.getDate()).padStart(2, "0"),
-    targetDateMonth: String(date.getMonth() + 1).padStart(2, "0"),
-    targetDateYear: String(date.getFullYear()),
-  };
-}
-
-function parseGoalDateParts({ day, month, year }) {
-  const normalizedDay = day.trim();
-  const normalizedMonth = month.trim();
-  const normalizedYear = year.trim();
-
-  if (!normalizedDay && !normalizedMonth && !normalizedYear) {
-    return null;
-  }
-
-  if (!normalizedDay || !normalizedMonth || !normalizedYear) {
-    return null;
-  }
-
-  const paddedDay = normalizedDay.padStart(2, "0");
-  const paddedMonth = normalizedMonth.padStart(2, "0");
-  const parsedDate = new Date(Number(normalizedYear), Number(paddedMonth) - 1, Number(paddedDay));
-
-  if (
-    Number.isNaN(parsedDate.getTime()) ||
-    normalizedYear.length !== 4 ||
-    parsedDate.getFullYear() !== Number(normalizedYear) ||
-    parsedDate.getMonth() !== Number(paddedMonth) - 1 ||
-    parsedDate.getDate() !== Number(paddedDay)
-  ) {
-    return null;
-  }
-
-  return normalizedYear + "-" + paddedMonth + "-" + paddedDay;
-}
-
-function normalizeTargetDatePart(name, value, options = {}) {
-  const digitsOnly = value.replace(/\D/g, "");
-
-  if (!digitsOnly) {
     return "";
   }
 
-  const numericValue = Number(digitsOnly);
-  const maxValue = name === "targetDateMonth" ? 12 : 31;
-  const minValue = 1;
-  const clampedValue = Math.min(Math.max(numericValue, minValue), maxValue);
-
-  if (digitsOnly.length >= 2 || options.padSingleDigit) {
-    return String(clampedValue).padStart(2, "0");
-  }
-
-  return digitsOnly;
-}
-
-function normalizeTargetDateYear(value, options = {}) {
-  const digitsOnly = value.replace(/\D/g, "").slice(0, 4);
-
-  if (!digitsOnly) {
-    return "";
-  }
-
-  if (options.enforceCurrentYear && digitsOnly.length === 4) {
-    return String(Math.max(Number(digitsOnly), currentYear));
-  }
-
-  return digitsOnly;
-}
-
-function getCurrentYear() {
-  return new Date().getFullYear();
+  return String(value).slice(0, 10);
 }
 
 function getStartOfToday() {
