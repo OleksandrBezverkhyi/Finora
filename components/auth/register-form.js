@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { useLocale } from "@/components/common/locale-provider";
+
 const initialFieldErrors = {
   name: [],
   email: [],
@@ -13,6 +15,7 @@ const initialFieldErrors = {
 
 export default function RegisterForm({ callbackUrl = "/dashboard" }) {
   const router = useRouter();
+  const { messages, translateErrorMessage } = useLocale();
   const [fieldErrors, setFieldErrors] = useState(initialFieldErrors);
   const [formError, setFormError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -44,15 +47,18 @@ export default function RegisterForm({ callbackUrl = "/dashboard" }) {
 
       if (!response.ok) {
         if (response.status === 400 && data.issues) {
-          setFieldErrors({
-            ...initialFieldErrors,
-            ...data.issues.fieldErrors,
-          });
-          setFormError(data.issues.formErrors?.[0] || "");
+          const translatedFieldErrors = Object.fromEntries(
+            Object.entries({ ...initialFieldErrors, ...data.issues.fieldErrors }).map(([key, value]) => [
+              key,
+              Array.isArray(value) ? value.map((item) => translateErrorMessage(item)) : value,
+            ])
+          );
+          setFieldErrors(translatedFieldErrors);
+          setFormError(translateErrorMessage(data.issues.formErrors?.[0] || ""));
           return;
         }
 
-        setFormError(data.error || "Unable to create account right now.");
+        setFormError(translateErrorMessage(data.error || "Unable to create account right now."));
         return;
       }
 
@@ -63,9 +69,8 @@ export default function RegisterForm({ callbackUrl = "/dashboard" }) {
 
       router.push(`${loginUrl.pathname}${loginUrl.search}`);
       router.refresh();
-    } catch (error) {
-      console.error("Register request failed", error);
-      setFormError("Unexpected error. Please try again.");
+    } catch {
+      setFormError(translateErrorMessage("Unexpected error. Please try again."));
     } finally {
       setIsSubmitting(false);
     }
@@ -87,13 +92,13 @@ export default function RegisterForm({ callbackUrl = "/dashboard" }) {
 
       <label className="block space-y-2">
         <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--muted)]">
-          Name
+          {messages.register.name}
         </span>
         <input
           name="name"
           type="text"
           autoComplete="name"
-          placeholder="Your name"
+          placeholder={messages.register.yourName}
           className="w-full rounded-2xl border border-[var(--border)] bg-white px-4 py-3 text-base text-[var(--foreground)] outline-none transition placeholder:text-[var(--muted)]/70 focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-soft)]"
         />
         {renderFieldError("name")}
@@ -101,7 +106,7 @@ export default function RegisterForm({ callbackUrl = "/dashboard" }) {
 
       <label className="block space-y-2">
         <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--muted)]">
-          Email
+          {messages.login.email}
         </span>
         <input
           name="email"
@@ -116,14 +121,14 @@ export default function RegisterForm({ callbackUrl = "/dashboard" }) {
 
       <label className="block space-y-2">
         <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--muted)]">
-          Password
+          {messages.login.password}
         </span>
         <input
           name="password"
           type="password"
           autoComplete="new-password"
           required
-          placeholder="Create a strong password"
+          placeholder={messages.register.createPassword}
           className="w-full rounded-2xl border border-[var(--border)] bg-white px-4 py-3 text-base text-[var(--foreground)] outline-none transition placeholder:text-[var(--muted)]/70 focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-soft)]"
         />
         {renderFieldError("password")}
@@ -131,14 +136,14 @@ export default function RegisterForm({ callbackUrl = "/dashboard" }) {
 
       <label className="block space-y-2">
         <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--muted)]">
-          Confirm password
+          {messages.register.confirmPassword}
         </span>
         <input
           name="confirmPassword"
           type="password"
           autoComplete="new-password"
           required
-          placeholder="Repeat your password"
+          placeholder={messages.register.repeatPassword}
           className="w-full rounded-2xl border border-[var(--border)] bg-white px-4 py-3 text-base text-[var(--foreground)] outline-none transition placeholder:text-[var(--muted)]/70 focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-soft)]"
         />
         {renderFieldError("confirmPassword")}
@@ -156,13 +161,13 @@ export default function RegisterForm({ callbackUrl = "/dashboard" }) {
           disabled={isSubmitting}
           className="rounded-full bg-[var(--accent)] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[var(--accent-strong)] hover:shadow-[0_14px_30px_rgba(15,118,110,0.24)] disabled:cursor-not-allowed disabled:opacity-70"
         >
-          {isSubmitting ? "Creating account..." : "Create account"}
+          {isSubmitting ? messages.register.creating : messages.register.createAccount}
         </button>
         <Link
           href={`/login${callbackUrl && callbackUrl !== "/dashboard" ? `?callbackUrl=${encodeURIComponent(callbackUrl)}` : ""}`}
           className="rounded-full border border-[var(--border)] bg-white px-5 py-3 text-center text-sm font-semibold text-[var(--foreground)] transition hover:border-[var(--accent)] hover:text-[var(--accent-strong)]"
         >
-          Back to login
+          {messages.register.backToLogin}
         </Link>
       </div>
     </form>
