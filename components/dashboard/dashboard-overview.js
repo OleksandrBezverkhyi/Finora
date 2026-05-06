@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 
 const periodOptions = [
@@ -9,17 +10,18 @@ const periodOptions = [
   { value: "custom", label: "Custom" },
 ];
 
-export default function DashboardOverview({ initialSummary }) {
+export default function DashboardOverview({ initialSummary, initialRecommendations }) {
   const [selectedPeriod, setSelectedPeriod] = useState(initialSummary.period.type || "month");
   const [customRange, setCustomRange] = useState({
     from: toDateInputValue(initialSummary.period.from),
     to: toDateInputValue(initialSummary.period.to),
   });
   const [summary, setSummary] = useState(initialSummary);
+  const [recommendations, setRecommendations] = useState(initialRecommendations);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
-  async function loadSummary({ period, from, to }) {
+  async function loadDashboardData({ period, from, to }) {
     setIsLoading(true);
     setError("");
 
@@ -37,17 +39,28 @@ export default function DashboardOverview({ initialSummary }) {
         }
       }
 
-      const response = await fetch(`/api/analytics/summary?${params.toString()}`);
-      const data = await response.json();
+      const query = params.toString();
+      const [summaryResponse, recommendationsResponse] = await Promise.all([
+        fetch(`/api/analytics/summary?${query}`),
+        fetch(`/api/recommendations?${query}`),
+      ]);
+      const [summaryData, recommendationsData] = await Promise.all([
+        summaryResponse.json(),
+        recommendationsResponse.json(),
+      ]);
 
-      if (!response.ok) {
-        setError(data.error || "Unable to load dashboard summary right now.");
+      if (!summaryResponse.ok || !recommendationsResponse.ok) {
+        setError(
+          summaryData.error ||
+            recommendationsData.error ||
+            "Unable to load dashboard data right now."
+        );
         return;
       }
 
-      setSummary(data);
-    } catch (requestError) {
-      console.error("Load dashboard summary failed", requestError);
+      setSummary(summaryData);
+      setRecommendations(recommendationsData);
+    } catch {
       setError("Unexpected error. Please try again.");
     } finally {
       setIsLoading(false);
@@ -59,7 +72,7 @@ export default function DashboardOverview({ initialSummary }) {
 
     if (nextPeriod !== "custom") {
       setCustomRange({ from: "", to: "" });
-      await loadSummary({ period: nextPeriod });
+      await loadDashboardData({ period: nextPeriod });
     }
   }
 
@@ -73,7 +86,7 @@ export default function DashboardOverview({ initialSummary }) {
   }
 
   async function applyCustomRange() {
-    await loadSummary({
+    await loadDashboardData({
       period: "custom",
       from: customRange.from,
       to: customRange.to,
@@ -210,6 +223,60 @@ export default function DashboardOverview({ initialSummary }) {
       </section>
 
       <section className="glass-panel rounded-[1.75rem] p-6">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-sm font-medium text-[var(--muted)]">Alerts and recommendations</p>
+            <p className="mt-2 text-sm text-[var(--muted)]">
+              Budget pressure, spending spikes, and goal pacing signals for the selected period.
+            </p>
+          </div>
+          <span className="rounded-full border border-[var(--border)] bg-white/80 px-3 py-1 text-sm font-medium text-[var(--foreground)]">
+            {recommendations.alerts.length} alerts
+          </span>
+        </div>
+
+        <div className="mt-6 space-y-3">
+          {recommendations.alerts.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-[var(--border)] px-4 py-5 text-sm text-[var(--muted)]">
+              No active alerts for this period. Your budgets, spending trend, and goal pacing look stable.
+            </div>
+          ) : (
+            recommendations.alerts.map((alert) => (
+              <article
+                key={alert.id}
+                className={
+                  "rounded-2xl border px-4 py-4 " +
+                  getAlertCardClass(alert.severity)
+                }
+              >
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="space-y-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className={getAlertBadgeClass(alert.severity)}>{formatAlertType(alert.type)}</span>
+                      <span className="text-xs font-medium text-[var(--muted)]">
+                        {formatSourceNames(alert.sourceIds, recommendations.sources)}
+                      </span>
+                    </div>
+                    <h3 className="text-base font-semibold text-[var(--foreground)]">{alert.title}</h3>
+                    <p className="text-sm leading-6 text-[var(--muted)]">{alert.message}</p>
+                  </div>
+
+                  {alert.href ? (
+                    <Link
+                      href={alert.href}
+                      className="inline-flex rounded-full border border-[var(--border)] bg-white/85 px-4 py-2 text-sm font-semibold text-[var(--foreground)] transition hover:border-[var(--accent)] hover:text-[var(--accent-strong)]"
+                    >
+                      {alert.actionLabel || "Open"}
+                    </Link>
+                  ) : null}
+                </div>
+              </article>
+            ))
+          )}
+        </div>
+      </section>
+
+      <section className="glass-panel rounded-[1.75rem] p-6">
         <div className="flex items-center justify-between gap-4">
           <div>
             <p className="text-sm font-medium text-[var(--muted)]">Recent transactions</p>
@@ -300,6 +367,54 @@ function formatPeriodLabel(period) {
   const to = period.to ? formatDate(period.to) : "now";
 
   return `${from} - ${to}`;
+}
+
+function formatAlertType(type) {
+  if (type === "budget_exceeded") {
+    return "Budget";
+  }
+
+  if (type === "spending_spike") {
+    return "Trend";
+  }
+
+  if (type === "goal_overdue") {
+    return "Goal overdue";
+  }
+
+  return "Goal pace";
+}
+
+function formatSourceNames(sourceIds, sources) {
+  const sourceNames = sourceIds
+    .map((sourceId) => sources.find((source) => source.id === sourceId)?.name)
+    .filter(Boolean);
+
+  return sourceNames.join(" · ");
+}
+
+function getAlertCardClass(severity) {
+  if (severity === "high") {
+    return "border-rose-300 bg-rose-50/80";
+  }
+
+  if (severity === "medium") {
+    return "border-amber-300 bg-amber-50/80";
+  }
+
+  return "border-[var(--border)] bg-white/75";
+}
+
+function getAlertBadgeClass(severity) {
+  if (severity === "high") {
+    return "rounded-full border border-rose-200 bg-rose-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-rose-700";
+  }
+
+  if (severity === "medium") {
+    return "rounded-full border border-amber-200 bg-amber-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-amber-700";
+  }
+
+  return "rounded-full border border-[var(--border)] bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted)]";
 }
 
 function toDateInputValue(value) {

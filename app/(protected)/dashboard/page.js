@@ -1,5 +1,6 @@
 import DashboardOverview from "@/components/dashboard/dashboard-overview";
 import prisma from "@/lib/prisma";
+import { getRecommendations } from "@/lib/recommendations";
 import { requireSession } from "@/lib/session";
 
 function serializeTransaction(transaction) {
@@ -120,6 +121,12 @@ export default async function DashboardPage() {
     })),
     recentTransactions: recentTransactions.map(serializeTransaction),
   };
+  const initialRecommendations = await getRecommendations({
+    userId: session.user.id,
+    period: "month",
+    from: monthStart,
+    to: monthEnd,
+  });
 
   return (
     <div className="space-y-8">
@@ -138,7 +145,7 @@ export default async function DashboardPage() {
         </div>
       </section>
 
-      <DashboardOverview initialSummary={initialSummary} />
+      <DashboardOverview initialSummary={initialSummary} initialRecommendations={initialRecommendations} />
     </div>
   );
 }

@@ -416,6 +416,22 @@ function TrendTooltip({ active, payload, label }) {
   );
 }
 
+function CategoryTooltip({ active, payload }) {
+  if (!active || !payload || payload.length === 0) {
+    return null;
+  }
+
+  const category = payload[0].payload;
+
+  return (
+    <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface-strong)] px-4 py-3 shadow-xl">
+      <p className="text-sm font-semibold text-[var(--foreground)]">{category.name}</p>
+      <p className="mt-2 text-sm text-[var(--muted)]">{formatMoney(category.amount)}</p>
+      <p className="mt-1 text-xs font-medium text-[var(--muted)]">{category.sharePercent}% of expenses</p>
+    </div>
+  );
+}
+
 function toDateInputValue(value) {
   if (!value) {
     return "";
