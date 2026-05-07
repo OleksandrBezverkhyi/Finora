@@ -165,33 +165,6 @@ export default function AnalyticsOverview({ initialTrend, initialByCategory, ini
         {error ? <div className="mt-6 rounded-2xl border border-rose-300 bg-rose-50 px-4 py-3 text-sm text-rose-800">{error}</div> : null}
       </section>
 
-      <section className="glass-panel rounded-[1.75rem] p-6">
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <p className="text-sm font-medium text-[var(--muted)]">{messages.analytics.trendTitle}</p>
-            <p className="mt-2 text-sm text-[var(--muted)]">{messages.analytics.trendDescription}</p>
-          </div>
-          <div className="flex gap-2 text-xs font-medium text-[var(--muted)]">
-            <span className="rounded-full bg-[var(--accent-soft)] px-3 py-1 text-[var(--accent-strong)]">{messages.common.income}</span>
-            <span className="rounded-full bg-orange-100 px-3 py-1 text-orange-700">{messages.common.expense}</span>
-          </div>
-        </div>
-
-        <div className="mt-6 h-80">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={trendData} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
-              <CartesianGrid stroke="rgba(76, 58, 35, 0.08)" vertical={false} />
-              <XAxis dataKey="label" tickLine={false} axisLine={false} tick={{ fill: "#6d655d", fontSize: 12 }} />
-              <YAxis tickLine={false} axisLine={false} tick={{ fill: "#6d655d", fontSize: 12 }} tickFormatter={(value) => formatMoneyCompact(value, locale)} />
-              <Tooltip content={<TrendTooltip locale={locale} incomeLabel={messages.common.income} expenseLabel={messages.common.expense} />} />
-              <Legend />
-              <Line type="monotone" dataKey="income" name={messages.common.income} stroke={incomeColor} strokeWidth={3} dot={false} />
-              <Line type="monotone" dataKey="expense" name={messages.common.expense} stroke={expenseColor} strokeWidth={3} dot={false} />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      </section>
-
       <section className="grid gap-5 xl:grid-cols-[1.15fr_0.85fr]">
         <div className="glass-panel rounded-[1.75rem] p-6">
           <div className="flex items-center justify-between gap-4">
@@ -270,6 +243,33 @@ export default function AnalyticsOverview({ initialTrend, initialByCategory, ini
             <CompareDeltaRow label={messages.common.expense} value={compare.change.expense} accent="expense" locale={locale} messages={messages} />
             <CompareDeltaRow label={messages.common.balance} value={compare.change.balance} accent="neutral" locale={locale} messages={messages} />
           </div>
+        </div>
+      </section>
+
+      <section className="glass-panel rounded-[1.75rem] p-6">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <p className="text-sm font-medium text-[var(--muted)]">{messages.analytics.trendTitle}</p>
+            <p className="mt-2 text-sm text-[var(--muted)]">{messages.analytics.trendDescription}</p>
+          </div>
+          <div className="flex gap-2 text-xs font-medium text-[var(--muted)]">
+            <span className="rounded-full bg-[var(--accent-soft)] px-3 py-1 text-[var(--accent-strong)]">{messages.common.income}</span>
+            <span className="rounded-full bg-orange-100 px-3 py-1 text-orange-700">{messages.common.expense}</span>
+          </div>
+        </div>
+
+        <div className="mt-6 h-80">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={trendData} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
+              <CartesianGrid stroke="rgba(76, 58, 35, 0.08)" vertical={false} />
+              <XAxis dataKey="label" tickLine={false} axisLine={false} tick={{ fill: "#6d655d", fontSize: 12 }} />
+              <YAxis tickLine={false} axisLine={false} tick={{ fill: "#6d655d", fontSize: 12 }} tickFormatter={(value) => formatMoneyCompact(value, locale)} />
+              <Tooltip content={<TrendTooltip locale={locale} incomeLabel={messages.common.income} expenseLabel={messages.common.expense} />} />
+              <Legend />
+              <Line type="monotone" dataKey="income" name={messages.common.income} stroke={incomeColor} strokeWidth={3} dot={false} />
+              <Line type="monotone" dataKey="expense" name={messages.common.expense} stroke={expenseColor} strokeWidth={3} dot={false} />
+            </LineChart>
+          </ResponsiveContainer>
         </div>
       </section>
     </div>

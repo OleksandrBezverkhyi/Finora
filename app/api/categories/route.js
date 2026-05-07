@@ -1,6 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 
+import { OVERALL_EXPENSES_CATEGORY_NAME } from "@/lib/budgets";
 import prisma from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
 import { categorySchema } from "@/lib/validators";
@@ -19,6 +20,9 @@ export async function GET() {
   const categories = await prisma.category.findMany({
     where: {
       userId: user.id,
+      name: {
+        not: OVERALL_EXPENSES_CATEGORY_NAME,
+      },
     },
     orderBy: [{ type: "asc" }, { name: "asc" }],
     select: {
@@ -50,6 +54,18 @@ export async function POST(request) {
         {
           error: "Validation failed",
           issues: parsedData.error.flatten(),
+        },
+        { status: 400 }
+      );
+    }
+
+    if (
+      parsedData.data.type === "EXPENSE" &&
+      parsedData.data.name === OVERALL_EXPENSES_CATEGORY_NAME
+    ) {
+      return NextResponse.json(
+        {
+          error: "Category name is reserved",
         },
         { status: 400 }
       );

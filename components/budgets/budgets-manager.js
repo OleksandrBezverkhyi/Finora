@@ -183,7 +183,11 @@ export default function BudgetsManager({ initialBudgetData, initialCategories, i
               <label className="block space-y-2">
                 <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--muted)]">{messages.common.category}</span>
                 <select name="categoryId" value={formData.categoryId} onChange={handleInputChange} className="w-full rounded-2xl border border-[var(--border)] bg-white px-4 py-3 text-base text-[var(--foreground)] outline-none transition focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-soft)]">
-                  {categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
+                  {categories.map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {getBudgetCategoryLabel(category, messages)}
+                    </option>
+                  ))}
                 </select>
                 {renderFieldError("categoryId")}
               </label>
@@ -236,7 +240,9 @@ export default function BudgetsManager({ initialBudgetData, initialCategories, i
                     <div className="flex items-center gap-3">
                       <span className="h-4 w-4 rounded-full border border-black/5" style={{ backgroundColor: budget.category.color || "#0F766E" }} />
                       <div>
-                        <p className="font-semibold text-[var(--foreground)]">{budget.category.name}</p>
+                        <p className="font-semibold text-[var(--foreground)]">
+                          {getBudgetCategoryLabel(budget, messages)}
+                        </p>
                         <p className="mt-1 text-sm text-[var(--muted)]">{interpolate(messages.budgets.limitSpent, { limit: formatMoneyLocalized(budget.amount, locale), spent: formatMoneyLocalized(budget.spent, locale) })}</p>
                       </div>
                     </div>
@@ -271,11 +277,30 @@ function SummaryCard({ label, value, hint }) {
 }
 
 function sortBudgets(budgets) {
-  return [...budgets].sort((left, right) => left.category.name.localeCompare(right.category.name));
+  return [...budgets].sort((left, right) => {
+    if (left.isOverallCategory && !right.isOverallCategory) {
+      return -1;
+    }
+
+    if (right.isOverallCategory && !left.isOverallCategory) {
+      return 1;
+    }
+
+    return left.category.name.localeCompare(right.category.name);
+  });
 }
 
 function recalculateTotals(budgets) {
-  const totals = budgets.reduce((accumulator, budget) => ({ planned: accumulator.planned + Number(budget.amount), spent: accumulator.spent + Number(budget.spent), overLimitCount: accumulator.overLimitCount + (budget.isOverLimit ? 1 : 0) }), { planned: 0, spent: 0, overLimitCount: 0 });
+  const totals = budgets
+    .filter((budget) => !budget.isOverallCategory)
+    .reduce(
+      (accumulator, budget) => ({
+        planned: accumulator.planned + Number(budget.amount),
+        spent: accumulator.spent + Number(budget.spent),
+        overLimitCount: accumulator.overLimitCount + (budget.isOverLimit ? 1 : 0),
+      }),
+      { planned: 0, spent: 0, overLimitCount: 0 }
+    );
   return { planned: totals.planned.toFixed(2), spent: totals.spent.toFixed(2), remaining: Math.max(totals.planned - totals.spent, 0).toFixed(2), overLimitAmount: Math.max(totals.spent - totals.planned, 0).toFixed(2), overLimitCount: totals.overLimitCount };
 }
 
@@ -283,4 +308,10 @@ function getStatusBadgeClass(status) {
   if (status === "over") return "rounded-full border border-rose-200 bg-rose-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-rose-700";
   if (status === "warning") return "rounded-full border border-amber-200 bg-amber-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-amber-700";
   return "rounded-full border border-emerald-200 bg-emerald-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-emerald-700";
+}
+
+function getBudgetCategoryLabel(categoryLike, messages) {
+  return categoryLike.isOverallCategory || categoryLike.category?.isOverallCategory
+    ? messages.budgets.overallExpenses
+    : categoryLike.name || categoryLike.category?.name || "";
 }
