@@ -1,4 +1,5 @@
 import CategoriesManager from "@/components/categories/categories-manager";
+import { OVERALL_EXPENSES_CATEGORY_NAME } from "@/lib/budgets";
 import prisma from "@/lib/prisma";
 import { getServerMessages } from "@/lib/server-locale";
 import { requireSession } from "@/lib/session";
@@ -8,7 +9,12 @@ export default async function CategoriesPage() {
   const messages = await getServerMessages();
 
   const categories = await prisma.category.findMany({
-    where: { userId: session.user.id },
+    where: {
+      userId: session.user.id,
+      name: {
+        not: OVERALL_EXPENSES_CATEGORY_NAME,
+      },
+    },
     orderBy: [{ type: "asc" }, { name: "asc" }],
     select: { id: true, name: true, type: true, color: true, createdAt: true, updatedAt: true },
   });

@@ -273,7 +273,7 @@ export default function BudgetsManager({ initialBudgetData, initialCategories, i
 }
 
 function SummaryCard({ label, value, hint }) {
-  return <div className="glass-panel rounded-[1.5rem] p-5"><p className="text-sm font-medium text-[var(--muted)]">{label}</p><p className="mt-4 text-3xl font-semibold tracking-tight text-[var(--foreground)]">{value}</p>{hint ? <p className="mt-2 text-sm text-[var(--muted)]">{hint}</p> : null}</div>;
+  return <div className="glass-panel min-w-0 rounded-[1.5rem] p-5"><p className="text-sm font-medium text-[var(--muted)]">{label}</p><p className="mt-4 break-words text-2xl font-semibold leading-tight tracking-tight text-[var(--foreground)] xl:text-3xl">{value}</p>{hint ? <p className="mt-2 break-words text-sm text-[var(--muted)]">{hint}</p> : null}</div>;
 }
 
 function sortBudgets(budgets) {

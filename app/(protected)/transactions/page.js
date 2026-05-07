@@ -1,4 +1,5 @@
 import TransactionsManager from "@/components/transactions/transactions-manager";
+import { OVERALL_EXPENSES_CATEGORY_NAME } from "@/lib/budgets";
 import { formatPlural } from "@/lib/i18n";
 import prisma from "@/lib/prisma";
 import { getServerLocale, getServerMessages } from "@/lib/server-locale";
@@ -11,7 +12,12 @@ export default async function TransactionsPage() {
 
   const [categories, transactions, total] = await Promise.all([
     prisma.category.findMany({
-      where: { userId: session.user.id },
+      where: {
+        userId: session.user.id,
+        name: {
+          not: OVERALL_EXPENSES_CATEGORY_NAME,
+        },
+      },
       orderBy: [{ type: "asc" }, { name: "asc" }],
       select: { id: true, name: true, type: true, color: true },
     }),
