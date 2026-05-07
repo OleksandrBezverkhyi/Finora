@@ -177,21 +177,23 @@ export default function GoalsManager({ initialGoalsData }) {
             <div className="rounded-2xl border border-dashed border-[var(--border)] px-4 py-5 text-sm text-[var(--muted)]">{messages.goals.noGoals}</div>
           ) : (
             goalsData.goals.map((goal) => (
-              <article key={goal.id} className={"rounded-2xl border px-4 py-4 transition " + (goal.displayStatus === "ARCHIVED" ? "border-stone-200 bg-stone-50/80" : goal.displayStatus === "COMPLETED" ? "border-emerald-200 bg-emerald-50/80" : goal.recommendation.isOverdue ? "border-rose-300 bg-rose-50/80" : "border-[var(--border)] bg-white/75")}>
+              <article key={goal.id} className={"rounded-2xl border px-4 py-4 transition " + (goal.displayStatus === "ARCHIVED" ? "border-stone-300 bg-stone-100/90 shadow-none opacity-90" : goal.displayStatus === "COMPLETED" ? "border-emerald-200 bg-emerald-50/80" : goal.recommendation.isOverdue ? "border-rose-300 bg-rose-50/80" : "border-[var(--border)] bg-white/75")}>
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                   <div className="space-y-3">
                     <div>
-                      <p className="font-semibold text-[var(--foreground)]">{goal.name}</p>
-                      <p className="mt-1 text-sm text-[var(--muted)]">{interpolate(messages.goals.savedOfTarget, { saved: formatMoneyLocalized(goal.currentAmount, locale), target: formatMoneyLocalized(goal.targetAmount, locale) })}</p>
+                      <p className={"font-semibold " + (goal.displayStatus === "ARCHIVED" ? "text-stone-700" : "text-[var(--foreground)]")}>{goal.name}</p>
+                      <p className={"mt-1 text-sm " + (goal.displayStatus === "ARCHIVED" ? "text-stone-500" : "text-[var(--muted)]")}>{interpolate(messages.goals.savedOfTarget, { saved: formatMoneyLocalized(goal.currentAmount, locale), target: formatMoneyLocalized(goal.targetAmount, locale) })}</p>
                     </div>
-                    <div className="h-3 w-full overflow-hidden rounded-full bg-stone-200/80"><div className={"h-full rounded-full " + (goal.displayStatus === "COMPLETED" ? "bg-emerald-500" : goal.recommendation.isOverdue ? "bg-rose-500" : "bg-[var(--accent)]")} style={{ width: String(Math.max(goal.progressPercent, 4)) + "%" }} /></div>
-                    <div className="flex flex-wrap items-center gap-3 text-sm text-[var(--muted)]">
-                      <span>{interpolate(messages.goals.reachedPercent, { percent: goal.progressPercent })}</span>
-                      <span>{interpolate(messages.goals.remaining, { amount: formatMoneyLocalized(goal.remainingAmount, locale) })}</span>
-                      {goal.targetDate ? <span>{interpolate(messages.goals.targetDateValue, { date: formatDateLocalized(goal.targetDate, locale) })}</span> : null}
+                    <div className={"h-3 w-full overflow-hidden rounded-full " + (goal.displayStatus === "ARCHIVED" ? "bg-stone-300/90" : "bg-stone-200/80")}><div className={"h-full rounded-full " + (goal.displayStatus === "ARCHIVED" ? "bg-stone-500" : goal.displayStatus === "COMPLETED" ? "bg-emerald-500" : goal.recommendation.isOverdue ? "bg-rose-500" : "bg-[var(--accent)]")} style={{ width: String(Math.max(goal.progressBarPercent ?? Math.min(goal.progressPercent, 100), 4)) + "%" }} /></div>
+                    <div className={"rounded-[1.35rem] border px-4 py-4 " + (goal.displayStatus === "ARCHIVED" ? "border-stone-300 bg-stone-200/70" : "border-[var(--border)] bg-white/85 shadow-[0_10px_24px_rgba(15,23,42,0.05)]")}>
+                      <div className={"flex flex-wrap items-center gap-x-4 gap-y-2 text-sm font-medium " + (goal.displayStatus === "ARCHIVED" ? "text-stone-600" : "text-[var(--foreground)]/88")}>
+                        <span>{interpolate(messages.goals.reachedPercent, { percent: goal.progressPercent })}</span>
+                        <span>{interpolate(messages.goals.remaining, { amount: formatMoneyLocalized(goal.remainingAmount, locale) })}</span>
+                        {goal.targetDate ? <span>{interpolate(messages.goals.targetDateValue, { date: formatDateLocalized(goal.targetDate, locale) })}</span> : null}
+                      </div>
+                      <p className={"mt-3 text-sm leading-6 " + (goal.displayStatus === "ARCHIVED" ? "text-stone-600" : "font-medium text-[var(--foreground)]")}>{getRecommendationLabel(goal, locale, messages)}</p>
                     </div>
-                    <p className="text-sm text-[var(--muted)]">{getRecommendationLabel(goal, locale, messages)}</p>
-                    {goal.note ? <p className="text-sm text-[var(--foreground)]/80">{goal.note}</p> : null}
+                    {goal.note ? <p className={"text-sm leading-6 " + (goal.displayStatus === "ARCHIVED" ? "text-stone-600" : "text-[var(--foreground)]/80")}>{goal.note}</p> : null}
                   </div>
                   <div className="flex flex-col items-start gap-3 sm:items-end">
                     <span className={getStatusBadgeClass(goal)}>{getStatusLabel(goal, messages)}</span>
