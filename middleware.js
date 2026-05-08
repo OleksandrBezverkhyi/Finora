@@ -9,7 +9,6 @@ const protectedPrefixes = [
   "/budgets",
   "/goals",
   "/planning",
-  "/import-export",
   "/profile",
 ];
 
@@ -49,7 +48,6 @@ export const config = {
     "/budgets/:path*",
     "/goals/:path*",
     "/planning/:path*",
-    "/import-export/:path*",
     "/profile/:path*",
   ],
 };
