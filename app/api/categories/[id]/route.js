@@ -1,6 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 
+import { OVERALL_EXPENSES_CATEGORY_NAME } from "@/lib/budgets";
 import prisma from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
 import { categorySchema } from "@/lib/validators";
@@ -17,10 +18,11 @@ async function getOwnedCategoryId(id, userId) {
     },
     select: {
       id: true,
+      name: true,
     },
   });
 
-  return category?.id ?? null;
+  return category ?? null;
 }
 
 export async function PUT(request, { params }) {
@@ -31,10 +33,14 @@ export async function PUT(request, { params }) {
   }
 
   const { id } = await params;
-  const ownedCategoryId = await getOwnedCategoryId(id, user.id);
+  const ownedCategory = await getOwnedCategoryId(id, user.id);
 
-  if (!ownedCategoryId) {
+  if (!ownedCategory) {
     return NextResponse.json({ error: "Category not found" }, { status: 404 });
+  }
+
+  if (ownedCategory.name === OVERALL_EXPENSES_CATEGORY_NAME) {
+    return NextResponse.json({ error: "Category cannot be modified" }, { status: 403 });
   }
 
   try {
@@ -53,7 +59,7 @@ export async function PUT(request, { params }) {
 
     const category = await prisma.category.update({
       where: {
-        id: ownedCategoryId,
+        id: ownedCategory.id,
       },
       data: parsedData.data,
       select: {
@@ -91,16 +97,20 @@ export async function DELETE(_request, { params }) {
   }
 
   const { id } = await params;
-  const ownedCategoryId = await getOwnedCategoryId(id, user.id);
+  const ownedCategory = await getOwnedCategoryId(id, user.id);
 
-  if (!ownedCategoryId) {
+  if (!ownedCategory) {
     return NextResponse.json({ error: "Category not found" }, { status: 404 });
+  }
+
+  if (ownedCategory.name === OVERALL_EXPENSES_CATEGORY_NAME) {
+    return NextResponse.json({ error: "Category cannot be deleted" }, { status: 403 });
   }
 
   try {
     await prisma.category.delete({
       where: {
-        id: ownedCategoryId,
+        id: ownedCategory.id,
       },
     });
 

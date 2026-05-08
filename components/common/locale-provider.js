@@ -2,18 +2,32 @@
 
 import { createContext, useContext, useMemo, useState } from "react";
 
-import { getHtmlLang, getIntlLocale, getMessages, LOCALE_COOKIE_NAME, normalizeLocale, translateErrorMessage } from "@/lib/i18n";
+import {
+  formatMoneyLocalized,
+  getCurrencySymbol,
+  getHtmlLang,
+  getIntlLocale,
+  getMessages,
+  LOCALE_COOKIE_NAME,
+  normalizeCurrency,
+  normalizeLocale,
+  translateErrorMessage,
+} from "@/lib/i18n";
 
 const LocaleContext = createContext(null);
 
-export function LocaleProvider({ initialLocale, children }) {
+export function LocaleProvider({ initialLocale, initialCurrency = "UAH", children }) {
   const [locale, setLocaleState] = useState(normalizeLocale(initialLocale));
+  const [currency, setCurrencyState] = useState(normalizeCurrency(initialCurrency));
 
   const value = useMemo(() => {
     const normalized = normalizeLocale(locale);
+    const normalizedCurrency = normalizeCurrency(currency);
 
     return {
       locale: normalized,
+      currency: normalizedCurrency,
+      currencySymbol: getCurrencySymbol(normalizedCurrency, normalized),
       intlLocale: getIntlLocale(normalized),
       messages: getMessages(normalized),
       setLocale(nextLocale) {
@@ -22,11 +36,17 @@ export function LocaleProvider({ initialLocale, children }) {
         document.documentElement.lang = getHtmlLang(normalizedNext);
         setLocaleState(normalizedNext);
       },
+      setCurrency(nextCurrency) {
+        setCurrencyState(normalizeCurrency(nextCurrency));
+      },
+      formatMoney(value) {
+        return formatMoneyLocalized(value, normalized, normalizedCurrency);
+      },
       translateErrorMessage(message) {
         return translateErrorMessage(message, normalized);
       },
     };
-  }, [locale]);
+  }, [locale, currency]);
 
   return <LocaleContext.Provider value={value}>{children}</LocaleContext.Provider>;
 }

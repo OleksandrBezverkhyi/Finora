@@ -5,13 +5,13 @@ import { useMemo, useState } from "react";
 
 import DayFirstDateInput from "@/components/common/day-first-date-input";
 import { useLocale } from "@/components/common/locale-provider";
-import { formatDateLocalized, formatMoneyLocalized, interpolate } from "@/lib/i18n";
+import { formatDateLocalized, interpolate } from "@/lib/i18n";
 
 const initialFilterState = { period: "", from: "", to: "", type: "", categoryId: "", q: "", min: "", max: "", sort: "date_desc" };
 const initialFieldErrors = { type: [], categoryId: [], amount: [], date: [], comment: [] };
 
 export default function TransactionsManager({ categories, initialTransactions, initialPagination }) {
-  const { locale, messages, translateErrorMessage } = useLocale();
+  const { locale, currencySymbol, formatMoney, messages, translateErrorMessage } = useLocale();
   const periodOptions = useMemo(
     () => [
       { value: "", label: messages.common.allTime },
@@ -202,7 +202,7 @@ export default function TransactionsManager({ categories, initialTransactions, i
               <label className="block space-y-2"><span className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--muted)]">{messages.common.type}</span><select name="type" value={formData.type} onChange={handleFormChange} className="w-full rounded-2xl border border-[var(--border)] bg-white px-4 py-3 text-base text-[var(--foreground)] outline-none transition focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-soft)]">{typeOptions.filter((option) => option.value).map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select>{renderFieldError("type")}</label>
               <label className="block space-y-2"><span className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--muted)]">{messages.common.category}</span><select name="categoryId" value={formData.categoryId} onChange={handleFormChange} className="w-full rounded-2xl border border-[var(--border)] bg-white px-4 py-3 text-base text-[var(--foreground)] outline-none transition focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-soft)]">{formCategories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}</select>{renderFieldError("categoryId")}</label>
               <div className="grid gap-4 sm:grid-cols-2">
-                <label className="block space-y-2"><span className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--muted)]">{messages.transactions.amountLabel}</span><input name="amount" type="number" min="0" step="0.01" inputMode="decimal" value={formData.amount} onChange={handleFormChange} placeholder="0.00" className="w-full rounded-2xl border border-[var(--border)] bg-white px-4 py-3 text-base text-[var(--foreground)] outline-none transition placeholder:text-[var(--muted)]/70 focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-soft)]" />{renderFieldError("amount")}</label>
+                <label className="block space-y-2"><span className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--muted)]">{messages.transactions.amountLabel}, {currencySymbol}</span><input name="amount" type="number" min="0" step="0.01" inputMode="decimal" value={formData.amount} onChange={handleFormChange} placeholder="0.00" className="w-full rounded-2xl border border-[var(--border)] bg-white px-4 py-3 text-base text-[var(--foreground)] outline-none transition placeholder:text-[var(--muted)]/70 focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-soft)]" />{renderFieldError("amount")}</label>
                 <label className="block space-y-2"><span className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--muted)]">{messages.common.date}</span><DayFirstDateInput name="date" value={formData.date} onChange={handleFormChange} className="w-full rounded-2xl border border-[var(--border)] bg-white px-4 py-3 text-base text-[var(--foreground)] outline-none transition placeholder:text-[var(--muted)]/70 focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-soft)]" />{renderFieldError("date")}</label>
               </div>
               <label className="block space-y-2"><span className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--muted)]">{messages.common.comment}</span><textarea name="comment" rows="4" value={formData.comment} onChange={handleFormChange} placeholder={messages.transactions.optionalNote} className="w-full rounded-2xl border border-[var(--border)] bg-white px-4 py-3 text-base text-[var(--foreground)] outline-none transition placeholder:text-[var(--muted)]/70 focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-soft)]" />{renderFieldError("comment")}</label>
@@ -259,7 +259,7 @@ export default function TransactionsManager({ categories, initialTransactions, i
                     <td className="px-4 py-4"><span className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] ${transaction.type === "INCOME" ? "bg-emerald-100 text-emerald-700" : "bg-rose-100 text-rose-700"}`}>{transaction.type === "INCOME" ? messages.common.income : messages.common.expense}</span></td>
                     <td className="px-4 py-4"><div className="flex items-center gap-3"><span className="h-3.5 w-3.5 rounded-full border border-black/5" style={{ backgroundColor: transaction.category.color || "#0F766E" }} /><span className="font-medium text-[var(--foreground)]">{transaction.category.name}</span></div></td>
                     <td className="px-4 py-4 text-sm text-[var(--muted)]">{transaction.comment || messages.common.noComment}</td>
-                    <td className="px-4 py-4 text-sm font-semibold text-[var(--foreground)]">{formatMoneyLocalized(transaction.amount, locale)}</td>
+                    <td className="px-4 py-4 text-sm font-semibold text-[var(--foreground)]">{formatMoney(transaction.amount)}</td>
                     <td className="rounded-r-2xl px-4 py-4"><div className="flex flex-wrap gap-2"><button type="button" onClick={() => handleEdit(transaction)} className="rounded-full border border-[var(--border)] bg-white px-4 py-2 text-sm font-semibold text-[var(--foreground)] transition hover:border-[var(--accent)] hover:text-[var(--accent-strong)]">{messages.common.edit}</button><button type="button" onClick={() => handleDelete(transaction.id)} disabled={deletingId === transaction.id} className="rounded-full border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 transition hover:border-rose-300 hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-70">{deletingId === transaction.id ? messages.common.deleting : messages.common.delete}</button></div></td>
                   </tr>
                 ))

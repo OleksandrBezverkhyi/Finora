@@ -73,6 +73,7 @@ export async function GET(request) {
     period: filters.period || "month",
     from,
     to,
+    currency: user.currency || "UAH",
   });
 
   return NextResponse.json(recommendations);

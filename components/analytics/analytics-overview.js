@@ -20,13 +20,13 @@ import {
 
 import DayFirstDateInput from "@/components/common/day-first-date-input";
 import { useLocale } from "@/components/common/locale-provider";
-import { formatMoneyLocalized, getDateFnsLocale, interpolate } from "@/lib/i18n";
+import { getDateFnsLocale, interpolate } from "@/lib/i18n";
 
 const incomeColor = "#0F766E";
 const expenseColor = "#EA580C";
 
 export default function AnalyticsOverview({ initialTrend, initialByCategory, initialCompare }) {
-  const { locale, messages, translateErrorMessage } = useLocale();
+  const { locale, currency, formatMoney, messages, translateErrorMessage } = useLocale();
   const periodOptions = useMemo(
     () => [
       { value: "day", label: messages.periods.day },
@@ -165,33 +165,6 @@ export default function AnalyticsOverview({ initialTrend, initialByCategory, ini
         {error ? <div className="mt-6 rounded-2xl border border-rose-300 bg-rose-50 px-4 py-3 text-sm text-rose-800">{error}</div> : null}
       </section>
 
-      <section className="glass-panel rounded-[1.75rem] p-6">
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <p className="text-sm font-medium text-[var(--muted)]">{messages.analytics.trendTitle}</p>
-            <p className="mt-2 text-sm text-[var(--muted)]">{messages.analytics.trendDescription}</p>
-          </div>
-          <div className="flex gap-2 text-xs font-medium text-[var(--muted)]">
-            <span className="rounded-full bg-[var(--accent-soft)] px-3 py-1 text-[var(--accent-strong)]">{messages.common.income}</span>
-            <span className="rounded-full bg-orange-100 px-3 py-1 text-orange-700">{messages.common.expense}</span>
-          </div>
-        </div>
-
-        <div className="mt-6 h-80">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={trendData} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
-              <CartesianGrid stroke="rgba(76, 58, 35, 0.08)" vertical={false} />
-              <XAxis dataKey="label" tickLine={false} axisLine={false} tick={{ fill: "#6d655d", fontSize: 12 }} />
-              <YAxis tickLine={false} axisLine={false} tick={{ fill: "#6d655d", fontSize: 12 }} tickFormatter={(value) => formatMoneyCompact(value, locale)} />
-              <Tooltip content={<TrendTooltip locale={locale} incomeLabel={messages.common.income} expenseLabel={messages.common.expense} />} />
-              <Legend />
-              <Line type="monotone" dataKey="income" name={messages.common.income} stroke={incomeColor} strokeWidth={3} dot={false} />
-              <Line type="monotone" dataKey="expense" name={messages.common.expense} stroke={expenseColor} strokeWidth={3} dot={false} />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      </section>
-
       <section className="grid gap-5 xl:grid-cols-[1.15fr_0.85fr]">
         <div className="glass-panel rounded-[1.75rem] p-6">
           <div className="flex items-center justify-between gap-4">
@@ -200,7 +173,7 @@ export default function AnalyticsOverview({ initialTrend, initialByCategory, ini
               <p className="mt-2 text-sm text-[var(--muted)]">{messages.analytics.expenseStructureDescription}</p>
             </div>
             <span className="rounded-full border border-[var(--border)] bg-white/75 px-3 py-1 text-sm font-medium text-[var(--foreground)]">
-              {interpolate(messages.analytics.totalExpenses, { amount: formatMoneyLocalized(byCategory.totalExpense, locale) })}
+              {interpolate(messages.analytics.totalExpenses, { amount: formatMoney(byCategory.totalExpense) })}
             </span>
           </div>
 
@@ -214,7 +187,7 @@ export default function AnalyticsOverview({ initialTrend, initialByCategory, ini
                     <Pie data={categoryChartData} dataKey="amount" nameKey="name" innerRadius={64} outerRadius={96} paddingAngle={3}>
                       {categoryChartData.map((entry) => <Cell key={entry.categoryId} fill={entry.color || expenseColor} />)}
                     </Pie>
-                    <Tooltip content={<CategoryTooltip locale={locale} shareTemplate={messages.analytics.shareOfExpenses} />} />
+                    <Tooltip content={<CategoryTooltip locale={locale} currency={currency} shareTemplate={messages.analytics.shareOfExpenses} />} />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
@@ -227,7 +200,7 @@ export default function AnalyticsOverview({ initialTrend, initialByCategory, ini
                         <span className="h-3.5 w-3.5 rounded-full border border-black/5" style={{ backgroundColor: category.color || expenseColor }} />
                         <span className="font-medium text-[var(--foreground)]">{category.name}</span>
                       </div>
-                      <span className="text-sm font-semibold text-[var(--foreground)]">{formatMoneyLocalized(category.amount, locale)}</span>
+                      <span className="text-sm font-semibold text-[var(--foreground)]">{formatMoney(category.amount)}</span>
                     </div>
                     <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-stone-200/80">
                       <div className="h-full rounded-full" style={{ width: String(Math.min(category.sharePercent, 100)) + "%", backgroundColor: category.color || expenseColor }} />
@@ -246,7 +219,7 @@ export default function AnalyticsOverview({ initialTrend, initialByCategory, ini
                   <CartesianGrid stroke="rgba(76, 58, 35, 0.08)" horizontal={false} />
                   <XAxis type="number" hide />
                   <YAxis type="category" dataKey="name" tickLine={false} axisLine={false} width={100} tick={{ fill: "#6d655d", fontSize: 12 }} />
-                  <Tooltip content={<CategoryTooltip locale={locale} shareTemplate={messages.analytics.shareOfExpenses} />} />
+                  <Tooltip content={<CategoryTooltip locale={locale} currency={currency} shareTemplate={messages.analytics.shareOfExpenses} />} />
                   <Bar dataKey="amount" radius={[0, 10, 10, 0]}>
                     {categoryChartData.map((entry) => <Cell key={entry.categoryId} fill={entry.color || expenseColor} />)}
                   </Bar>
@@ -261,40 +234,67 @@ export default function AnalyticsOverview({ initialTrend, initialByCategory, ini
           <p className="mt-2 text-sm text-[var(--muted)]">{messages.analytics.compareDescription}</p>
 
           <div className="mt-6 grid gap-4 sm:grid-cols-2">
-            <CompareSnapshotCard label={messages.common.thisPeriod} values={compare.current} period={compare.period.current} locale={locale} messages={messages} dateFnsLocale={dateFnsLocale} />
-            <CompareSnapshotCard label={messages.common.previousPeriod} values={compare.previous} period={compare.period.previous} locale={locale} messages={messages} dateFnsLocale={dateFnsLocale} />
+            <CompareSnapshotCard label={messages.common.thisPeriod} values={compare.current} period={compare.period.current} locale={locale} currency={currency} messages={messages} dateFnsLocale={dateFnsLocale} />
+            <CompareSnapshotCard label={messages.common.previousPeriod} values={compare.previous} period={compare.period.previous} locale={locale} currency={currency} messages={messages} dateFnsLocale={dateFnsLocale} />
           </div>
 
           <div className="mt-6 space-y-3">
-            <CompareDeltaRow label={messages.common.income} value={compare.change.income} accent="positive" locale={locale} messages={messages} />
-            <CompareDeltaRow label={messages.common.expense} value={compare.change.expense} accent="expense" locale={locale} messages={messages} />
-            <CompareDeltaRow label={messages.common.balance} value={compare.change.balance} accent="neutral" locale={locale} messages={messages} />
+            <CompareDeltaRow label={messages.common.income} value={compare.change.income} accent="positive" locale={locale} currency={currency} messages={messages} />
+            <CompareDeltaRow label={messages.common.expense} value={compare.change.expense} accent="expense" locale={locale} currency={currency} messages={messages} />
+            <CompareDeltaRow label={messages.common.balance} value={compare.change.balance} accent="neutral" locale={locale} currency={currency} messages={messages} />
           </div>
+        </div>
+      </section>
+
+      <section className="glass-panel rounded-[1.75rem] p-6">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <p className="text-sm font-medium text-[var(--muted)]">{messages.analytics.trendTitle}</p>
+            <p className="mt-2 text-sm text-[var(--muted)]">{messages.analytics.trendDescription}</p>
+          </div>
+          <div className="flex gap-2 text-xs font-medium text-[var(--muted)]">
+            <span className="rounded-full bg-[var(--accent-soft)] px-3 py-1 text-[var(--accent-strong)]">{messages.common.income}</span>
+            <span className="rounded-full bg-orange-100 px-3 py-1 text-orange-700">{messages.common.expense}</span>
+          </div>
+        </div>
+
+        <div className="mt-6 h-80">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={trendData} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
+              <CartesianGrid stroke="rgba(76, 58, 35, 0.08)" vertical={false} />
+              <XAxis dataKey="label" tickLine={false} axisLine={false} tick={{ fill: "#6d655d", fontSize: 12 }} />
+              <YAxis tickLine={false} axisLine={false} tick={{ fill: "#6d655d", fontSize: 12 }} tickFormatter={(value) => formatMoneyCompact(value, locale)} />
+              <Tooltip content={<TrendTooltip locale={locale} currency={currency} incomeLabel={messages.common.income} expenseLabel={messages.common.expense} />} />
+              <Legend />
+              <Line type="monotone" dataKey="income" name={messages.common.income} stroke={incomeColor} strokeWidth={3} dot={false} />
+              <Line type="monotone" dataKey="expense" name={messages.common.expense} stroke={expenseColor} strokeWidth={3} dot={false} />
+            </LineChart>
+          </ResponsiveContainer>
         </div>
       </section>
     </div>
   );
 }
 
-function CompareSnapshotCard({ label, values, period, locale, messages, dateFnsLocale }) {
+function CompareSnapshotCard({ label, values, period, locale, currency, messages, dateFnsLocale }) {
   return (
     <div className="rounded-[1.5rem] border border-[var(--border)] bg-white/75 p-4">
       <p className="text-sm font-semibold text-[var(--foreground)]">{label}</p>
       <p className="mt-1 text-xs text-[var(--muted)]">{formatRangeLabel(period, locale, dateFnsLocale, messages)}</p>
       <div className="mt-4 space-y-3 text-sm">
-        <SnapshotRow label={messages.common.income} value={values.income} locale={locale} />
-        <SnapshotRow label={messages.common.expense} value={values.expense} locale={locale} />
-        <SnapshotRow label={messages.common.balance} value={values.balance} locale={locale} />
+        <SnapshotRow label={messages.common.income} value={values.income} locale={locale} currency={currency} />
+        <SnapshotRow label={messages.common.expense} value={values.expense} locale={locale} currency={currency} />
+        <SnapshotRow label={messages.common.balance} value={values.balance} locale={locale} currency={currency} />
       </div>
     </div>
   );
 }
 
-function SnapshotRow({ label, value, locale }) {
-  return <div className="flex items-center justify-between gap-4"><span className="text-[var(--muted)]">{label}</span><span className="font-semibold text-[var(--foreground)]">{formatMoneyLocalized(value, locale)}</span></div>;
+function SnapshotRow({ label, value, locale, currency }) {
+  return <div className="flex items-center justify-between gap-4"><span className="text-[var(--muted)]">{label}</span><span className="font-semibold text-[var(--foreground)]">{formatMoneyStatic(value, locale, currency)}</span></div>;
 }
 
-function CompareDeltaRow({ label, value, accent, locale, messages }) {
+function CompareDeltaRow({ label, value, accent, locale, currency, messages }) {
   return (
     <div className="rounded-2xl border border-[var(--border)] bg-white/70 px-4 py-3">
       <div className="flex items-center justify-between gap-4">
@@ -303,7 +303,7 @@ function CompareDeltaRow({ label, value, accent, locale, messages }) {
           <p className="mt-1 text-sm text-[var(--muted)]">{messages.analytics.differenceFromPrevious}</p>
         </div>
         <div className="text-right">
-          <p className="font-semibold text-[var(--foreground)]">{formatSignedMoney(value.amount, locale)}</p>
+          <p className="font-semibold text-[var(--foreground)]">{formatSignedMoney(value.amount, locale, currency)}</p>
           <span className={"mt-2 inline-flex rounded-full px-3 py-1 text-xs font-semibold " + getDeltaBadgeClass(value, accent)}>{formatPercent(value.percent, messages)}</span>
         </div>
       </div>
@@ -311,7 +311,7 @@ function CompareDeltaRow({ label, value, accent, locale, messages }) {
   );
 }
 
-function TrendTooltip({ active, payload, label, locale }) {
+function TrendTooltip({ active, payload, label, locale, currency }) {
   if (!active || !payload || payload.length === 0) return null;
   return (
     <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface-strong)] px-4 py-3 shadow-xl">
@@ -320,7 +320,7 @@ function TrendTooltip({ active, payload, label, locale }) {
         {payload.map((entry) => (
           <div key={entry.dataKey} className="flex items-center justify-between gap-4">
             <span style={{ color: entry.color }}>{entry.name}</span>
-            <span className="font-medium text-[var(--foreground)]">{formatMoneyLocalized(entry.value, locale)}</span>
+            <span className="font-medium text-[var(--foreground)]">{formatMoneyStatic(entry.value, locale, currency)}</span>
           </div>
         ))}
       </div>
@@ -328,13 +328,13 @@ function TrendTooltip({ active, payload, label, locale }) {
   );
 }
 
-function CategoryTooltip({ active, payload, locale, shareTemplate }) {
+function CategoryTooltip({ active, payload, locale, currency, shareTemplate }) {
   if (!active || !payload || payload.length === 0) return null;
   const category = payload[0].payload;
   return (
     <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface-strong)] px-4 py-3 shadow-xl">
       <p className="text-sm font-semibold text-[var(--foreground)]">{category.name}</p>
-      <p className="mt-2 text-sm text-[var(--muted)]">{formatMoneyLocalized(category.amount, locale)}</p>
+      <p className="mt-2 text-sm text-[var(--muted)]">{formatMoneyStatic(category.amount, locale, currency)}</p>
       <p className="mt-1 text-xs font-medium text-[var(--muted)]">{interpolate(shareTemplate, { percent: category.sharePercent })}</p>
     </div>
   );
@@ -345,11 +345,20 @@ function toDateInputValue(value) {
   return String(value).slice(0, 10);
 }
 
-function formatSignedMoney(value, locale) {
+function formatSignedMoney(value, locale, currency) {
   const amount = Number(value);
-  if (amount > 0) return "+" + formatMoneyLocalized(amount, locale);
-  if (amount < 0) return "-" + formatMoneyLocalized(Math.abs(amount), locale);
-  return formatMoneyLocalized(0, locale);
+  if (amount > 0) return "+" + formatMoneyStatic(amount, locale, currency);
+  if (amount < 0) return "-" + formatMoneyStatic(Math.abs(amount), locale, currency);
+  return formatMoneyStatic(0, locale, currency);
+}
+
+function formatMoneyStatic(value, locale, currency) {
+  return new Intl.NumberFormat(locale === "uk" ? "uk-UA" : "en-GB", {
+    style: "currency",
+    currency,
+    currencyDisplay: "narrowSymbol",
+    minimumFractionDigits: 2,
+  }).format(Number(value));
 }
 
 function formatMoneyCompact(value, locale) {

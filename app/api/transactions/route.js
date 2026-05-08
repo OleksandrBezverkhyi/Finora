@@ -2,6 +2,7 @@ import { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
+import { OVERALL_EXPENSES_CATEGORY_NAME } from "@/lib/budgets";
 import prisma from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
 import { transactionSchema } from "@/lib/validators";
@@ -103,6 +104,9 @@ async function getOwnedCategory(categoryId, userId) {
     where: {
       id: categoryId,
       userId,
+      name: {
+        not: OVERALL_EXPENSES_CATEGORY_NAME,
+      },
     },
     select: {
       id: true,

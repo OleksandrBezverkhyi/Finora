@@ -4,13 +4,13 @@ import { useMemo, useState } from "react";
 
 import DayFirstDateInput from "@/components/common/day-first-date-input";
 import { useLocale } from "@/components/common/locale-provider";
-import { formatDateLocalized, formatMoneyLocalized, formatPlural, interpolate } from "@/lib/i18n";
+import { formatDateLocalized, formatPlural, interpolate } from "@/lib/i18n";
 
 const initialErrors = { name: [], targetAmount: [], currentAmount: [], targetDate: [], note: [], status: [] };
 const initialForm = { name: "", targetAmount: "", currentAmount: "0", targetDate: "", note: "", status: "ACTIVE" };
 
 export default function GoalsManager({ initialGoalsData }) {
-  const { locale, messages, translateErrorMessage } = useLocale();
+  const { locale, currencySymbol, formatMoney, messages, translateErrorMessage } = useLocale();
   const statusOptions = useMemo(
     () => [
       { value: "ACTIVE", label: messages.common.active },
@@ -125,8 +125,8 @@ export default function GoalsManager({ initialGoalsData }) {
     <div className="grid gap-6 xl:grid-cols-[0.94fr_1.06fr]">
       <section className="space-y-5">
         <div className="grid gap-4 sm:grid-cols-3">
-          <SummaryCard label={messages.goals.target} value={formatMoneyLocalized(goalsData.totals.target, locale)} />
-          <SummaryCard label={messages.goals.saved} value={formatMoneyLocalized(goalsData.totals.saved, locale)} />
+          <SummaryCard label={messages.goals.target} value={formatMoney(goalsData.totals.target)} />
+          <SummaryCard label={messages.goals.saved} value={formatMoney(goalsData.totals.saved)} />
           <SummaryCard label={messages.goals.activeGoals} value={String(goalsData.totals.activeCount)} hint={interpolate(messages.goals.completedHint, { count: goalsData.totals.completedCount })} />
         </div>
 
@@ -140,8 +140,8 @@ export default function GoalsManager({ initialGoalsData }) {
           <form onSubmit={handleSubmit} className="mt-8 space-y-5">
             <label className="block space-y-2"><span className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--muted)]">{messages.goals.goalName}</span><input name="name" type="text" value={formData.name} onChange={handleInputChange} placeholder={messages.goals.goalNamePlaceholder} className="w-full rounded-2xl border border-[var(--border)] bg-white px-4 py-3 text-base text-[var(--foreground)] outline-none transition placeholder:text-[var(--muted)]/70 focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-soft)]" />{renderFieldError("name")}</label>
             <div className="grid gap-5 sm:grid-cols-2">
-              <label className="block space-y-2"><span className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--muted)]">{messages.goals.targetAmount}</span><input name="targetAmount" type="number" min="0" step="0.01" inputMode="decimal" value={formData.targetAmount} onChange={handleInputChange} placeholder="100000.00" className="w-full rounded-2xl border border-[var(--border)] bg-white px-4 py-3 text-base text-[var(--foreground)] outline-none transition placeholder:text-[var(--muted)]/70 focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-soft)]" />{renderFieldError("targetAmount")}</label>
-              <label className="block space-y-2"><span className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--muted)]">{messages.goals.saved}</span><input name="currentAmount" type="number" min="0" step="0.01" inputMode="decimal" value={formData.currentAmount} onChange={handleInputChange} placeholder="0.00" className="w-full rounded-2xl border border-[var(--border)] bg-white px-4 py-3 text-base text-[var(--foreground)] outline-none transition placeholder:text-[var(--muted)]/70 focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-soft)]" />{renderFieldError("currentAmount")}</label>
+              <label className="block space-y-2"><span className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--muted)]">{messages.goals.targetAmount}, {currencySymbol}</span><input name="targetAmount" type="number" min="0" step="0.01" inputMode="decimal" value={formData.targetAmount} onChange={handleInputChange} placeholder="100000.00" className="w-full rounded-2xl border border-[var(--border)] bg-white px-4 py-3 text-base text-[var(--foreground)] outline-none transition placeholder:text-[var(--muted)]/70 focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-soft)]" />{renderFieldError("targetAmount")}</label>
+              <label className="block space-y-2"><span className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--muted)]">{messages.goals.saved}, {currencySymbol}</span><input name="currentAmount" type="number" min="0" step="0.01" inputMode="decimal" value={formData.currentAmount} onChange={handleInputChange} placeholder="0.00" className="w-full rounded-2xl border border-[var(--border)] bg-white px-4 py-3 text-base text-[var(--foreground)] outline-none transition placeholder:text-[var(--muted)]/70 focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-soft)]" />{renderFieldError("currentAmount")}</label>
             </div>
             <div className="grid gap-5 sm:grid-cols-2">
               <label className="block space-y-2"><span className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--muted)]">{messages.goals.targetDate}</span><DayFirstDateInput name="targetDate" value={formData.targetDate} onChange={handleInputChange} className={"w-full rounded-2xl border border-[var(--border)] bg-white px-4 py-3 text-base outline-none transition placeholder:text-[var(--muted)]/70 focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-soft)] " + (formData.targetDate ? "text-[var(--foreground)]" : "text-[var(--muted)]")} />{renderFieldError("targetDate")}</label>
@@ -177,21 +177,23 @@ export default function GoalsManager({ initialGoalsData }) {
             <div className="rounded-2xl border border-dashed border-[var(--border)] px-4 py-5 text-sm text-[var(--muted)]">{messages.goals.noGoals}</div>
           ) : (
             goalsData.goals.map((goal) => (
-              <article key={goal.id} className={"rounded-2xl border px-4 py-4 transition " + (goal.displayStatus === "ARCHIVED" ? "border-stone-200 bg-stone-50/80" : goal.displayStatus === "COMPLETED" ? "border-emerald-200 bg-emerald-50/80" : goal.recommendation.isOverdue ? "border-rose-300 bg-rose-50/80" : "border-[var(--border)] bg-white/75")}>
+              <article key={goal.id} className={"rounded-2xl border px-4 py-4 transition " + (goal.displayStatus === "ARCHIVED" ? "border-stone-300 bg-stone-100/90 shadow-none opacity-90" : goal.displayStatus === "COMPLETED" ? "border-emerald-200 bg-emerald-50/80" : goal.recommendation.isOverdue ? "border-rose-300 bg-rose-50/80" : "border-[var(--border)] bg-white/75")}>
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                   <div className="space-y-3">
                     <div>
-                      <p className="font-semibold text-[var(--foreground)]">{goal.name}</p>
-                      <p className="mt-1 text-sm text-[var(--muted)]">{interpolate(messages.goals.savedOfTarget, { saved: formatMoneyLocalized(goal.currentAmount, locale), target: formatMoneyLocalized(goal.targetAmount, locale) })}</p>
+                      <p className={"font-semibold " + (goal.displayStatus === "ARCHIVED" ? "text-stone-700" : "text-[var(--foreground)]")}>{goal.name}</p>
+                      <p className={"mt-1 text-sm " + (goal.displayStatus === "ARCHIVED" ? "text-stone-500" : "text-[var(--muted)]")}>{interpolate(messages.goals.savedOfTarget, { saved: formatMoney(goal.currentAmount), target: formatMoney(goal.targetAmount) })}</p>
                     </div>
-                    <div className="h-3 w-full overflow-hidden rounded-full bg-stone-200/80"><div className={"h-full rounded-full " + (goal.displayStatus === "COMPLETED" ? "bg-emerald-500" : goal.recommendation.isOverdue ? "bg-rose-500" : "bg-[var(--accent)]")} style={{ width: String(Math.max(goal.progressPercent, 4)) + "%" }} /></div>
-                    <div className="flex flex-wrap items-center gap-3 text-sm text-[var(--muted)]">
-                      <span>{interpolate(messages.goals.reachedPercent, { percent: goal.progressPercent })}</span>
-                      <span>{interpolate(messages.goals.remaining, { amount: formatMoneyLocalized(goal.remainingAmount, locale) })}</span>
-                      {goal.targetDate ? <span>{interpolate(messages.goals.targetDateValue, { date: formatDateLocalized(goal.targetDate, locale) })}</span> : null}
+                    <div className={"h-3 w-full overflow-hidden rounded-full " + (goal.displayStatus === "ARCHIVED" ? "bg-stone-300/90" : "bg-stone-200/80")}><div className={"h-full rounded-full " + (goal.displayStatus === "ARCHIVED" ? "bg-stone-500" : goal.displayStatus === "COMPLETED" ? "bg-emerald-500" : goal.recommendation.isOverdue ? "bg-rose-500" : "bg-[var(--accent)]")} style={{ width: String(Math.max(goal.progressBarPercent ?? Math.min(goal.progressPercent, 100), 4)) + "%" }} /></div>
+                    <div className={"rounded-[1.35rem] border px-4 py-4 " + (goal.displayStatus === "ARCHIVED" ? "border-stone-300 bg-stone-200/70" : "border-[var(--border)] bg-white/85 shadow-[0_10px_24px_rgba(15,23,42,0.05)]")}>
+                      <div className={"flex flex-wrap items-center gap-x-4 gap-y-2 text-sm font-medium " + (goal.displayStatus === "ARCHIVED" ? "text-stone-600" : "text-[var(--foreground)]/88")}>
+                        <span>{interpolate(messages.goals.reachedPercent, { percent: goal.progressPercent })}</span>
+                        <span>{interpolate(messages.goals.remaining, { amount: formatMoney(goal.remainingAmount) })}</span>
+                        {goal.targetDate ? <span>{interpolate(messages.goals.targetDateValue, { date: formatDateLocalized(goal.targetDate, locale) })}</span> : null}
+                      </div>
+                      <p className={"mt-3 text-sm leading-6 " + (goal.displayStatus === "ARCHIVED" ? "text-stone-600" : "font-medium text-[var(--foreground)]")}>{getRecommendationLabel(goal, formatMoney, messages)}</p>
                     </div>
-                    <p className="text-sm text-[var(--muted)]">{getRecommendationLabel(goal, locale, messages)}</p>
-                    {goal.note ? <p className="text-sm text-[var(--foreground)]/80">{goal.note}</p> : null}
+                    {goal.note ? <p className={"text-sm leading-6 " + (goal.displayStatus === "ARCHIVED" ? "text-stone-600" : "text-[var(--foreground)]/80")}>{goal.note}</p> : null}
                   </div>
                   <div className="flex flex-col items-start gap-3 sm:items-end">
                     <span className={getStatusBadgeClass(goal)}>{getStatusLabel(goal, messages)}</span>
@@ -234,4 +236,4 @@ function getStartOfToday() { const today = new Date(); today.setHours(0, 0, 0, 0
 function isTodayOrFutureDate(value) { const date = new Date(value); date.setHours(0, 0, 0, 0); return date >= getStartOfToday(); }
 function getStatusLabel(goal, messages) { if (goal.displayStatus === "ARCHIVED") return messages.common.archived; if (goal.displayStatus === "COMPLETED") return messages.common.completed; if (goal.recommendation.isOverdue) return messages.goals.overdue; return messages.common.active; }
 function getStatusBadgeClass(goal) { if (goal.displayStatus === "ARCHIVED") return "rounded-full border border-stone-200 bg-stone-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-stone-700"; if (goal.displayStatus === "COMPLETED") return "rounded-full border border-emerald-200 bg-emerald-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-emerald-700"; if (goal.recommendation.isOverdue) return "rounded-full border border-rose-200 bg-rose-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-rose-700"; return "rounded-full border border-[var(--border)] bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted)]"; }
-function getRecommendationLabel(goal, locale, messages) { const recommendation = goal.recommendation; if (!recommendation.hasTargetDate) return messages.goals.addTargetDateRecommendation; if (goal.displayStatus === "COMPLETED") return messages.goals.completedRecommendation; if (recommendation.isOverdue) return interpolate(messages.goals.overdueRecommendation, { weekly: formatMoneyLocalized(recommendation.weeklyAmount, locale), monthly: formatMoneyLocalized(recommendation.monthlyAmount, locale) }); return interpolate(messages.goals.paceRecommendation, { weekly: formatMoneyLocalized(recommendation.weeklyAmount, locale), monthly: formatMoneyLocalized(recommendation.monthlyAmount, locale) }); }
+function getRecommendationLabel(goal, formatMoney, messages) { const recommendation = goal.recommendation; if (!recommendation.hasTargetDate) return messages.goals.addTargetDateRecommendation; if (goal.displayStatus === "COMPLETED") return messages.goals.completedRecommendation; if (recommendation.isOverdue) return interpolate(messages.goals.overdueRecommendation, { weekly: formatMoney(recommendation.weeklyAmount), monthly: formatMoney(recommendation.monthlyAmount) }); return interpolate(messages.goals.paceRecommendation, { weekly: formatMoney(recommendation.weeklyAmount), monthly: formatMoney(recommendation.monthlyAmount) }); }

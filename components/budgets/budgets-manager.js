@@ -3,12 +3,12 @@
 import { useMemo, useState } from "react";
 
 import { useLocale } from "@/components/common/locale-provider";
-import { formatMoneyLocalized, formatPlural, interpolate } from "@/lib/i18n";
+import { formatPlural, interpolate } from "@/lib/i18n";
 
 const initialErrors = { categoryId: [], amount: [], month: [], year: [] };
 
 export default function BudgetsManager({ initialBudgetData, initialCategories, initialMonth, initialYear }) {
-  const { locale, messages, translateErrorMessage } = useLocale();
+  const { locale, currencySymbol, formatMoney, messages, translateErrorMessage } = useLocale();
   const monthOptions = useMemo(
     () => Array.from({ length: 12 }, (_, index) => ({ value: index + 1, label: new Intl.DateTimeFormat(locale === "uk" ? "uk-UA" : "en-GB", { month: "long" }).format(new Date(2026, index, 1)) })),
     [locale]
@@ -164,9 +164,9 @@ export default function BudgetsManager({ initialBudgetData, initialCategories, i
         </div>
 
         <div className="grid gap-4 sm:grid-cols-3">
-          <SummaryCard label={messages.budgets.planned} value={formatMoneyLocalized(budgetData.totals.planned, locale)} />
-          <SummaryCard label={messages.budgets.spent} value={formatMoneyLocalized(budgetData.totals.spent, locale)} />
-          <SummaryCard label={messages.budgets.overLimit} value={String(budgetData.totals.overLimitCount)} hint={budgetData.totals.overLimitCount ? formatMoneyLocalized(budgetData.totals.overLimitAmount, locale) : messages.budgets.noExcess} />
+          <SummaryCard label={messages.budgets.planned} value={formatMoney(budgetData.totals.planned)} />
+          <SummaryCard label={messages.budgets.spent} value={formatMoney(budgetData.totals.spent)} />
+          <SummaryCard label={messages.budgets.overLimit} value={String(budgetData.totals.overLimitCount)} hint={budgetData.totals.overLimitCount ? formatMoney(budgetData.totals.overLimitAmount) : messages.budgets.noExcess} />
         </div>
 
         <section className="glass-panel rounded-[1.75rem] p-6 sm:p-8">
@@ -183,13 +183,17 @@ export default function BudgetsManager({ initialBudgetData, initialCategories, i
               <label className="block space-y-2">
                 <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--muted)]">{messages.common.category}</span>
                 <select name="categoryId" value={formData.categoryId} onChange={handleInputChange} className="w-full rounded-2xl border border-[var(--border)] bg-white px-4 py-3 text-base text-[var(--foreground)] outline-none transition focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-soft)]">
-                  {categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
+                  {categories.map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {getBudgetCategoryLabel(category, messages)}
+                    </option>
+                  ))}
                 </select>
                 {renderFieldError("categoryId")}
               </label>
 
               <label className="block space-y-2">
-                <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--muted)]">{messages.budgets.monthlyLimit}</span>
+                <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--muted)]">{messages.budgets.monthlyLimit}, {currencySymbol}</span>
                 <input name="amount" type="number" min="0" step="0.01" inputMode="decimal" value={formData.amount} onChange={handleInputChange} placeholder="0.00" className="w-full rounded-2xl border border-[var(--border)] bg-white px-4 py-3 text-base text-[var(--foreground)] outline-none transition placeholder:text-[var(--muted)]/70 focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-soft)]" />
                 {renderFieldError("amount")}
               </label>
@@ -236,14 +240,16 @@ export default function BudgetsManager({ initialBudgetData, initialCategories, i
                     <div className="flex items-center gap-3">
                       <span className="h-4 w-4 rounded-full border border-black/5" style={{ backgroundColor: budget.category.color || "#0F766E" }} />
                       <div>
-                        <p className="font-semibold text-[var(--foreground)]">{budget.category.name}</p>
-                        <p className="mt-1 text-sm text-[var(--muted)]">{interpolate(messages.budgets.limitSpent, { limit: formatMoneyLocalized(budget.amount, locale), spent: formatMoneyLocalized(budget.spent, locale) })}</p>
+                        <p className="font-semibold text-[var(--foreground)]">
+                          {getBudgetCategoryLabel(budget, messages)}
+                        </p>
+                        <p className="mt-1 text-sm text-[var(--muted)]">{interpolate(messages.budgets.limitSpent, { limit: formatMoney(budget.amount), spent: formatMoney(budget.spent) })}</p>
                       </div>
                     </div>
                     <div className="h-3 w-full overflow-hidden rounded-full bg-stone-200/80"><div className={"h-full rounded-full " + (budget.isOverLimit ? "bg-rose-500" : budget.isNearLimit ? "bg-amber-500" : "bg-[var(--accent)]")} style={{ width: `${Math.max(budget.progressPercent, 6)}%` }} /></div>
                     <div className="flex flex-wrap items-center gap-3 text-sm text-[var(--muted)]">
                       <span>{interpolate(messages.budgets.usedPercent, { percent: budget.progressPercent })}</span>
-                      {budget.isOverLimit ? <span className="font-semibold text-rose-700">{interpolate(messages.budgets.overBy, { amount: formatMoneyLocalized(budget.overLimitAmount, locale) })}</span> : <span>{interpolate(messages.budgets.remaining, { amount: formatMoneyLocalized(budget.remaining, locale) })}</span>}
+                      {budget.isOverLimit ? <span className="font-semibold text-rose-700">{interpolate(messages.budgets.overBy, { amount: formatMoney(budget.overLimitAmount) })}</span> : <span>{interpolate(messages.budgets.remaining, { amount: formatMoney(budget.remaining) })}</span>}
                     </div>
                   </div>
 
@@ -267,15 +273,34 @@ export default function BudgetsManager({ initialBudgetData, initialCategories, i
 }
 
 function SummaryCard({ label, value, hint }) {
-  return <div className="glass-panel rounded-[1.5rem] p-5"><p className="text-sm font-medium text-[var(--muted)]">{label}</p><p className="mt-4 text-3xl font-semibold tracking-tight text-[var(--foreground)]">{value}</p>{hint ? <p className="mt-2 text-sm text-[var(--muted)]">{hint}</p> : null}</div>;
+  return <div className="glass-panel min-w-0 rounded-[1.5rem] p-5"><p className="text-sm font-medium text-[var(--muted)]">{label}</p><p className="mt-4 break-words text-2xl font-semibold leading-tight tracking-tight text-[var(--foreground)] xl:text-3xl">{value}</p>{hint ? <p className="mt-2 break-words text-sm text-[var(--muted)]">{hint}</p> : null}</div>;
 }
 
 function sortBudgets(budgets) {
-  return [...budgets].sort((left, right) => left.category.name.localeCompare(right.category.name));
+  return [...budgets].sort((left, right) => {
+    if (left.isOverallCategory && !right.isOverallCategory) {
+      return -1;
+    }
+
+    if (right.isOverallCategory && !left.isOverallCategory) {
+      return 1;
+    }
+
+    return left.category.name.localeCompare(right.category.name);
+  });
 }
 
 function recalculateTotals(budgets) {
-  const totals = budgets.reduce((accumulator, budget) => ({ planned: accumulator.planned + Number(budget.amount), spent: accumulator.spent + Number(budget.spent), overLimitCount: accumulator.overLimitCount + (budget.isOverLimit ? 1 : 0) }), { planned: 0, spent: 0, overLimitCount: 0 });
+  const totals = budgets
+    .filter((budget) => !budget.isOverallCategory)
+    .reduce(
+      (accumulator, budget) => ({
+        planned: accumulator.planned + Number(budget.amount),
+        spent: accumulator.spent + Number(budget.spent),
+        overLimitCount: accumulator.overLimitCount + (budget.isOverLimit ? 1 : 0),
+      }),
+      { planned: 0, spent: 0, overLimitCount: 0 }
+    );
   return { planned: totals.planned.toFixed(2), spent: totals.spent.toFixed(2), remaining: Math.max(totals.planned - totals.spent, 0).toFixed(2), overLimitAmount: Math.max(totals.spent - totals.planned, 0).toFixed(2), overLimitCount: totals.overLimitCount };
 }
 
@@ -283,4 +308,10 @@ function getStatusBadgeClass(status) {
   if (status === "over") return "rounded-full border border-rose-200 bg-rose-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-rose-700";
   if (status === "warning") return "rounded-full border border-amber-200 bg-amber-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-amber-700";
   return "rounded-full border border-emerald-200 bg-emerald-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-emerald-700";
+}
+
+function getBudgetCategoryLabel(categoryLike, messages) {
+  return categoryLike.isOverallCategory || categoryLike.category?.isOverallCategory
+    ? messages.budgets.overallExpenses
+    : categoryLike.name || categoryLike.category?.name || "";
 }

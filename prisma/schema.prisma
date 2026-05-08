@@ -27,6 +27,7 @@ model User {
   id           String        @id @default(cuid())
   email        String        @unique
   passwordHash String
+  passwordUpdatedAt DateTime?
   name         String?
   currency     String        @default("UAH") @db.VarChar(3)
   createdAt    DateTime      @default(now())

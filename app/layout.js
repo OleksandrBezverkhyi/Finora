@@ -1,6 +1,7 @@
 import { Geist, Geist_Mono } from "next/font/google";
 
 import { LocaleProvider } from "@/components/common/locale-provider";
+import { getServerAuthSession } from "@/lib/session";
 import { getServerHtmlLang, getServerLocale } from "@/lib/server-locale";
 
 import "./globals.css";
@@ -23,11 +24,15 @@ export const metadata = {
 export default async function RootLayout({ children }) {
   const locale = await getServerLocale();
   const htmlLang = await getServerHtmlLang();
+  const session = await getServerAuthSession();
+  const currency = session?.user?.currency || "UAH";
 
   return (
     <html lang={htmlLang} suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} min-h-screen antialiased`}>
-        <LocaleProvider initialLocale={locale}>{children}</LocaleProvider>
+        <LocaleProvider initialLocale={locale} initialCurrency={currency}>
+          {children}
+        </LocaleProvider>
       </body>
     </html>
   );
