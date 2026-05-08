@@ -3,12 +3,12 @@
 import { useMemo, useState } from "react";
 
 import { useLocale } from "@/components/common/locale-provider";
-import { formatMoneyLocalized, formatPlural, interpolate } from "@/lib/i18n";
+import { formatPlural, interpolate } from "@/lib/i18n";
 
 const initialErrors = { categoryId: [], amount: [], month: [], year: [] };
 
 export default function BudgetsManager({ initialBudgetData, initialCategories, initialMonth, initialYear }) {
-  const { locale, messages, translateErrorMessage } = useLocale();
+  const { locale, currencySymbol, formatMoney, messages, translateErrorMessage } = useLocale();
   const monthOptions = useMemo(
     () => Array.from({ length: 12 }, (_, index) => ({ value: index + 1, label: new Intl.DateTimeFormat(locale === "uk" ? "uk-UA" : "en-GB", { month: "long" }).format(new Date(2026, index, 1)) })),
     [locale]
@@ -164,9 +164,9 @@ export default function BudgetsManager({ initialBudgetData, initialCategories, i
         </div>
 
         <div className="grid gap-4 sm:grid-cols-3">
-          <SummaryCard label={messages.budgets.planned} value={formatMoneyLocalized(budgetData.totals.planned, locale)} />
-          <SummaryCard label={messages.budgets.spent} value={formatMoneyLocalized(budgetData.totals.spent, locale)} />
-          <SummaryCard label={messages.budgets.overLimit} value={String(budgetData.totals.overLimitCount)} hint={budgetData.totals.overLimitCount ? formatMoneyLocalized(budgetData.totals.overLimitAmount, locale) : messages.budgets.noExcess} />
+          <SummaryCard label={messages.budgets.planned} value={formatMoney(budgetData.totals.planned)} />
+          <SummaryCard label={messages.budgets.spent} value={formatMoney(budgetData.totals.spent)} />
+          <SummaryCard label={messages.budgets.overLimit} value={String(budgetData.totals.overLimitCount)} hint={budgetData.totals.overLimitCount ? formatMoney(budgetData.totals.overLimitAmount) : messages.budgets.noExcess} />
         </div>
 
         <section className="glass-panel rounded-[1.75rem] p-6 sm:p-8">
@@ -193,7 +193,7 @@ export default function BudgetsManager({ initialBudgetData, initialCategories, i
               </label>
 
               <label className="block space-y-2">
-                <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--muted)]">{messages.budgets.monthlyLimit}</span>
+                <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--muted)]">{messages.budgets.monthlyLimit}, {currencySymbol}</span>
                 <input name="amount" type="number" min="0" step="0.01" inputMode="decimal" value={formData.amount} onChange={handleInputChange} placeholder="0.00" className="w-full rounded-2xl border border-[var(--border)] bg-white px-4 py-3 text-base text-[var(--foreground)] outline-none transition placeholder:text-[var(--muted)]/70 focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-soft)]" />
                 {renderFieldError("amount")}
               </label>
@@ -243,13 +243,13 @@ export default function BudgetsManager({ initialBudgetData, initialCategories, i
                         <p className="font-semibold text-[var(--foreground)]">
                           {getBudgetCategoryLabel(budget, messages)}
                         </p>
-                        <p className="mt-1 text-sm text-[var(--muted)]">{interpolate(messages.budgets.limitSpent, { limit: formatMoneyLocalized(budget.amount, locale), spent: formatMoneyLocalized(budget.spent, locale) })}</p>
+                        <p className="mt-1 text-sm text-[var(--muted)]">{interpolate(messages.budgets.limitSpent, { limit: formatMoney(budget.amount), spent: formatMoney(budget.spent) })}</p>
                       </div>
                     </div>
                     <div className="h-3 w-full overflow-hidden rounded-full bg-stone-200/80"><div className={"h-full rounded-full " + (budget.isOverLimit ? "bg-rose-500" : budget.isNearLimit ? "bg-amber-500" : "bg-[var(--accent)]")} style={{ width: `${Math.max(budget.progressPercent, 6)}%` }} /></div>
                     <div className="flex flex-wrap items-center gap-3 text-sm text-[var(--muted)]">
                       <span>{interpolate(messages.budgets.usedPercent, { percent: budget.progressPercent })}</span>
-                      {budget.isOverLimit ? <span className="font-semibold text-rose-700">{interpolate(messages.budgets.overBy, { amount: formatMoneyLocalized(budget.overLimitAmount, locale) })}</span> : <span>{interpolate(messages.budgets.remaining, { amount: formatMoneyLocalized(budget.remaining, locale) })}</span>}
+                      {budget.isOverLimit ? <span className="font-semibold text-rose-700">{interpolate(messages.budgets.overBy, { amount: formatMoney(budget.overLimitAmount) })}</span> : <span>{interpolate(messages.budgets.remaining, { amount: formatMoney(budget.remaining) })}</span>}
                     </div>
                   </div>
 

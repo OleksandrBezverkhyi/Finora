@@ -84,6 +84,7 @@ export default async function DashboardPage() {
     period: "month",
     from: monthStart,
     to: monthEnd,
+    currency: session.user.currency || "UAH",
   });
 
   return (

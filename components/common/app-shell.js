@@ -22,6 +22,7 @@ export default async function AppShell({ children }) {
     { href: "/analytics", label: messages.nav.analytics, active: true },
     { href: "/budgets", label: messages.nav.budgets, active: true },
     { href: "/goals", label: messages.nav.goals, active: true },
+    { href: "/profile", label: messages.nav.profile, active: true },
   ];
 
   return (

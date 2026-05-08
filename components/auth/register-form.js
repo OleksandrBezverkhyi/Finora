@@ -19,6 +19,8 @@ export default function RegisterForm({ callbackUrl = "/dashboard" }) {
   const [fieldErrors, setFieldErrors] = useState(initialFieldErrors);
   const [formError, setFormError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -123,14 +125,23 @@ export default function RegisterForm({ callbackUrl = "/dashboard" }) {
         <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--muted)]">
           {messages.login.password}
         </span>
-        <input
-          name="password"
-          type="password"
-          autoComplete="new-password"
-          required
-          placeholder={messages.register.createPassword}
-          className="w-full rounded-2xl border border-[var(--border)] bg-white px-4 py-3 text-base text-[var(--foreground)] outline-none transition placeholder:text-[var(--muted)]/70 focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-soft)]"
-        />
+        <div className="relative">
+          <input
+            name="password"
+            type={showPassword ? "text" : "password"}
+            autoComplete="new-password"
+            required
+            placeholder={messages.register.createPassword}
+            className="w-full rounded-2xl border border-[var(--border)] bg-white px-4 py-3 pr-24 text-base text-[var(--foreground)] outline-none transition placeholder:text-[var(--muted)]/70 focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-soft)]"
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword((current) => !current)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full border border-[var(--border)] bg-white px-3 py-1 text-xs font-semibold text-[var(--foreground)] transition hover:border-[var(--accent)] hover:text-[var(--accent-strong)]"
+          >
+            {showPassword ? messages.common.hide : messages.common.show}
+          </button>
+        </div>
         {renderFieldError("password")}
       </label>
 
@@ -138,14 +149,23 @@ export default function RegisterForm({ callbackUrl = "/dashboard" }) {
         <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--muted)]">
           {messages.register.confirmPassword}
         </span>
-        <input
-          name="confirmPassword"
-          type="password"
-          autoComplete="new-password"
-          required
-          placeholder={messages.register.repeatPassword}
-          className="w-full rounded-2xl border border-[var(--border)] bg-white px-4 py-3 text-base text-[var(--foreground)] outline-none transition placeholder:text-[var(--muted)]/70 focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-soft)]"
-        />
+        <div className="relative">
+          <input
+            name="confirmPassword"
+            type={showConfirmPassword ? "text" : "password"}
+            autoComplete="new-password"
+            required
+            placeholder={messages.register.repeatPassword}
+            className="w-full rounded-2xl border border-[var(--border)] bg-white px-4 py-3 pr-24 text-base text-[var(--foreground)] outline-none transition placeholder:text-[var(--muted)]/70 focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-soft)]"
+          />
+          <button
+            type="button"
+            onClick={() => setShowConfirmPassword((current) => !current)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full border border-[var(--border)] bg-white px-3 py-1 text-xs font-semibold text-[var(--foreground)] transition hover:border-[var(--accent)] hover:text-[var(--accent-strong)]"
+          >
+            {showConfirmPassword ? messages.common.hide : messages.common.show}
+          </button>
+        </div>
         {renderFieldError("confirmPassword")}
       </label>
 

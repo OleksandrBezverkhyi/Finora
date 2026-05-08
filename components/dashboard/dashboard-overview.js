@@ -7,14 +7,13 @@ import DayFirstDateInput from "@/components/common/day-first-date-input";
 import { useLocale } from "@/components/common/locale-provider";
 import {
   formatDateLocalized,
-  formatMoneyLocalized,
   formatPlural,
   localizeRecommendationAlert,
   localizeRecommendationSource,
 } from "@/lib/i18n";
 
 export default function DashboardOverview({ initialSummary, initialRecommendations }) {
-  const { locale, messages, translateErrorMessage } = useLocale();
+  const { locale, currency, formatMoney, messages, translateErrorMessage } = useLocale();
   const periodOptions = useMemo(
     () => [
       { value: "day", label: messages.periods.day },
@@ -174,18 +173,18 @@ export default function DashboardOverview({ initialSummary, initialRecommendatio
         <div className="grid gap-5 sm:grid-cols-2">
           <SummaryCard
             label={messages.common.income}
-            value={formatMoneyLocalized(summary.totals.income, locale)}
+            value={formatMoney(summary.totals.income)}
             hint={messages.dashboard.incomeHint}
           />
           <SummaryCard
             label={messages.common.expense}
-            value={formatMoneyLocalized(summary.totals.expense, locale)}
+            value={formatMoney(summary.totals.expense)}
             hint={messages.dashboard.expenseHint}
           />
           <div className="glass-panel rounded-[1.75rem] p-6 sm:col-span-2">
             <p className="text-sm font-medium text-[var(--muted)]">{messages.common.balance}</p>
             <p className="mt-6 text-4xl font-semibold tracking-tight text-[var(--foreground)]">
-              {formatMoneyLocalized(summary.totals.balance, locale)}
+              {formatMoney(summary.totals.balance)}
             </p>
             <p className="mt-3 text-sm text-[var(--muted)]">{messages.dashboard.balanceHint}</p>
           </div>
@@ -206,7 +205,7 @@ export default function DashboardOverview({ initialSummary, initialRecommendatio
                     <span className="h-3.5 w-3.5 rounded-full border border-black/5" style={{ backgroundColor: category.color || "#C2410C" }} />
                     <span className="font-medium text-[var(--foreground)]">{category.name}</span>
                   </div>
-                  <span className="text-sm font-semibold text-[var(--foreground)]">{formatMoneyLocalized(category.amount, locale)}</span>
+                  <span className="text-sm font-semibold text-[var(--foreground)]">{formatMoney(category.amount)}</span>
                 </div>
               ))
             )}
@@ -239,7 +238,7 @@ export default function DashboardOverview({ initialSummary, initialRecommendatio
             </div>
           ) : (
             recommendations.alerts.map((alert) => {
-              const localizedAlert = localizeRecommendationAlert(alert, locale);
+              const localizedAlert = localizeRecommendationAlert(alert, locale, currency);
               return (
                 <article key={alert.id} className={"rounded-2xl border px-4 py-4 " + getAlertCardClass(alert.severity)}>
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -302,7 +301,7 @@ export default function DashboardOverview({ initialSummary, initialRecommendatio
                 </div>
 
                 <div className="text-right">
-                  <p className="font-semibold text-[var(--foreground)]">{formatMoneyLocalized(transaction.amount, locale)}</p>
+                  <p className="font-semibold text-[var(--foreground)]">{formatMoney(transaction.amount)}</p>
                   <p className="mt-1 text-sm text-[var(--muted)]">
                     {formatDateLocalized(transaction.date, locale)} · {transaction.type === "INCOME" ? messages.common.income : messages.common.expense}
                   </p>
