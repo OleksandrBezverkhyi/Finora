@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
+import { buildDateRange, normalizeEnd, normalizeStart } from "@/lib/date";
 import { getRecommendations } from "@/lib/recommendations";
 import { getSessionUser } from "@/lib/session";
 
@@ -16,18 +17,6 @@ function unauthorizedResponse() {
 
 function badRequest(message) {
   return NextResponse.json({ error: message }, { status: 400 });
-}
-
-function normalizeStart(value) {
-  const date = new Date(value);
-  date.setHours(0, 0, 0, 0);
-  return date;
-}
-
-function normalizeEnd(value) {
-  const date = new Date(value);
-  date.setHours(23, 59, 59, 999);
-  return date;
 }
 
 export async function GET(request) {
@@ -57,8 +46,13 @@ export async function GET(request) {
   }
 
   const filters = parsedFilters.data;
-  const from = filters.from ? normalizeStart(filters.from) : null;
-  const to = filters.to ? normalizeEnd(filters.to) : null;
+  const dateRange = buildDateRange({
+    period: filters.period || "month",
+    from: filters.from,
+    to: filters.to,
+  });
+  const from = dateRange.start ? normalizeStart(dateRange.start) : null;
+  const to = dateRange.end ? normalizeEnd(dateRange.end) : null;
 
   if (filters.period === "custom" && !from && !to) {
     return badRequest("Custom period requires from or to date");

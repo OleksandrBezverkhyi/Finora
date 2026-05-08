@@ -4,6 +4,7 @@ import { formatPlural } from "@/lib/i18n";
 import prisma from "@/lib/prisma";
 import { getServerLocale, getServerMessages } from "@/lib/server-locale";
 import { requireSession } from "@/lib/session";
+import { serializeTransactionRecord } from "@/lib/transactions";
 
 export default async function TransactionsPage() {
   const session = await requireSession();
@@ -31,6 +32,8 @@ export default async function TransactionsPage() {
         amount: true,
         date: true,
         comment: true,
+        categoryName: true,
+        categoryColor: true,
         createdAt: true,
         updatedAt: true,
         category: { select: { id: true, name: true, type: true, color: true } },
@@ -64,7 +67,7 @@ export default async function TransactionsPage() {
 
       <TransactionsManager
         categories={categories}
-        initialTransactions={transactions.map((transaction) => ({ ...transaction, amount: transaction.amount.toString() }))}
+        initialTransactions={transactions.map(serializeTransactionRecord)}
         initialPagination={{ page: 1, pageSize: 10, total, totalPages: Math.max(1, Math.ceil(total / 10)) }}
       />
     </div>

@@ -230,6 +230,7 @@ export async function GET(request) {
       amount: true,
       date: true,
       comment: true,
+      categoryName: true,
       createdAt: true,
       updatedAt: true,
       category: {
@@ -243,7 +244,7 @@ export async function GET(request) {
   const rows = transactions.map((transaction) => [
     transaction.id,
     getLocalizedTypeLabel(transaction.type, messages),
-    transaction.category.name,
+    transaction.category?.name ?? transaction.categoryName,
     transaction.amount.toString(),
     user.currency || "UAH",
     formatDateOnly(transaction.date),

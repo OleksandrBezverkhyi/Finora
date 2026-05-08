@@ -5,6 +5,7 @@ import { z } from "zod";
 import { OVERALL_EXPENSES_CATEGORY_NAME } from "@/lib/budgets";
 import prisma from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
+import { buildTransactionCategorySnapshot, serializeTransactionRecord } from "@/lib/transactions";
 import { transactionSchema } from "@/lib/validators";
 
 const PAGE_SIZE = 10;
@@ -117,13 +118,6 @@ async function getOwnedCategory(categoryId, userId) {
   });
 }
 
-function serializeTransaction(transaction) {
-  return {
-    ...transaction,
-    amount: transaction.amount.toString(),
-  };
-}
-
 export async function GET(request) {
   const user = await getSessionUser();
 
@@ -198,6 +192,12 @@ export async function GET(request) {
         },
       },
       {
+        categoryName: {
+          contains: filters.q,
+          mode: "insensitive",
+        },
+      },
+      {
         category: {
           name: {
             contains: filters.q,
@@ -247,6 +247,8 @@ export async function GET(request) {
         amount: true,
         date: true,
         comment: true,
+        categoryName: true,
+        categoryColor: true,
         createdAt: true,
         updatedAt: true,
         category: {
@@ -264,7 +266,7 @@ export async function GET(request) {
 
   return NextResponse.json({
     ok: true,
-    transactions: transactions.map(serializeTransaction),
+    transactions: transactions.map(serializeTransactionRecord),
     pagination: {
       page,
       pageSize: PAGE_SIZE,
@@ -310,6 +312,7 @@ export async function POST(request) {
       data: {
         ...transactionData,
         userId: user.id,
+        ...buildTransactionCategorySnapshot(ownedCategory),
       },
       select: {
         id: true,
@@ -317,6 +320,8 @@ export async function POST(request) {
         amount: true,
         date: true,
         comment: true,
+        categoryName: true,
+        categoryColor: true,
         createdAt: true,
         updatedAt: true,
         category: {
@@ -333,7 +338,7 @@ export async function POST(request) {
     return NextResponse.json(
       {
         ok: true,
-        transaction: serializeTransaction(transaction),
+      transaction: serializeTransactionRecord(transaction),
       },
       { status: 201 }
     );

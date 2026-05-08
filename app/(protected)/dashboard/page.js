@@ -3,13 +3,7 @@ import prisma from "@/lib/prisma";
 import { getRecommendations } from "@/lib/recommendations";
 import { getServerMessages } from "@/lib/server-locale";
 import { requireSession } from "@/lib/session";
-
-function serializeTransaction(transaction) {
-  return {
-    ...transaction,
-    amount: transaction.amount.toString(),
-  };
-}
+import { serializeTransactionRecord } from "@/lib/transactions";
 
 export default async function DashboardPage() {
   const session = await requireSession();
@@ -31,7 +25,7 @@ export default async function DashboardPage() {
     prisma.transaction.aggregate({ where: { ...where, type: "INCOME" }, _sum: { amount: true } }),
     prisma.transaction.aggregate({ where: { ...where, type: "EXPENSE" }, _sum: { amount: true } }),
     prisma.transaction.groupBy({
-      by: ["categoryId"],
+      by: ["categoryId", "categoryName", "categoryColor"],
       where: { ...where, type: "EXPENSE" },
       _sum: { amount: true },
       orderBy: { _sum: { amount: "desc" } },
@@ -47,19 +41,13 @@ export default async function DashboardPage() {
         amount: true,
         date: true,
         comment: true,
+        categoryName: true,
+        categoryColor: true,
         category: { select: { id: true, name: true, color: true, type: true } },
       },
     }),
   ]);
 
-  const categoryIds = topExpenseGroups.map((item) => item.categoryId);
-  const categories = categoryIds.length
-    ? await prisma.category.findMany({
-        where: { id: { in: categoryIds }, userId: session.user.id },
-        select: { id: true, name: true, color: true },
-      })
-    : [];
-  const categoriesById = new Map(categories.map((category) => [category.id, category]));
   const income = Number(incomeAggregate._sum.amount || 0);
   const expense = Number(expenseAggregate._sum.amount || 0);
   const initialSummary = {
@@ -71,12 +59,12 @@ export default async function DashboardPage() {
       balance: (income - expense).toFixed(2),
     },
     topExpenseCategories: topExpenseGroups.map((item) => ({
-      categoryId: item.categoryId,
-      name: categoriesById.get(item.categoryId)?.name || "Unknown category",
-      color: categoriesById.get(item.categoryId)?.color || null,
+      categoryId: item.categoryId || `deleted-${item.categoryName}`,
+      name: item.categoryName || "Unknown category",
+      color: item.categoryColor || null,
       amount: Number(item._sum.amount || 0).toFixed(2),
     })),
-    recentTransactions: recentTransactions.map(serializeTransaction),
+    recentTransactions: recentTransactions.map(serializeTransactionRecord),
   };
 
   const initialRecommendations = await getRecommendations({

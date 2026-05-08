@@ -20,6 +20,7 @@ import {
 
 import DayFirstDateInput from "@/components/common/day-first-date-input";
 import { useLocale } from "@/components/common/locale-provider";
+import { canShiftPeriodForward, shiftPeriodRange, toDateParam } from "@/lib/date";
 import { getDateFnsLocale, interpolate } from "@/lib/i18n";
 
 const incomeColor = "#0F766E";
@@ -44,6 +45,12 @@ export default function AnalyticsOverview({ initialTrend, initialByCategory, ini
   const [compare, setCompare] = useState(initialCompare);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showAllCategories, setShowAllCategories] = useState(false);
+  const canMoveForward = canShiftPeriodForward(
+    selectedPeriod,
+    trend.period?.from,
+    trend.period?.to
+  );
 
   const trendData = trend.points.map((point) => ({
     ...point,
@@ -54,6 +61,9 @@ export default function AnalyticsOverview({ initialTrend, initialByCategory, ini
   }));
 
   const categoryChartData = byCategory.categories.map((category) => ({ ...category, amount: Number(category.amount) }));
+  const visibleCategoryItems = showAllCategories
+    ? categoryChartData
+    : categoryChartData.slice(0, 8);
 
   async function loadAnalytics({ period, from, to }) {
     setIsLoading(true);
@@ -63,10 +73,8 @@ export default function AnalyticsOverview({ initialTrend, initialByCategory, ini
       const params = new URLSearchParams();
       params.set("period", period);
 
-      if (period === "custom") {
-        if (from) params.set("from", from);
-        if (to) params.set("to", to);
-      }
+      if (from) params.set("from", from);
+      if (to) params.set("to", to);
 
       const query = params.toString();
       const [trendResponse, byCategoryResponse, compareResponse] = await Promise.all([
@@ -95,6 +103,7 @@ export default function AnalyticsOverview({ initialTrend, initialByCategory, ini
       setTrend(trendDataResponse);
       setByCategory(byCategoryDataResponse);
       setCompare(compareDataResponse);
+      setShowAllCategories(false);
     } catch {
       setError(translateErrorMessage("Unexpected error. Please try again."));
     } finally {
@@ -117,6 +126,29 @@ export default function AnalyticsOverview({ initialTrend, initialByCategory, ini
 
   async function applyCustomRange() {
     await loadAnalytics({ period: "custom", from: customRange.from, to: customRange.to });
+  }
+
+  async function shiftSelectedPeriod(direction) {
+    if (selectedPeriod === "custom") {
+      return;
+    }
+
+    if (direction > 0 && !canMoveForward) {
+      return;
+    }
+
+    const shiftedRange = shiftPeriodRange(
+      selectedPeriod,
+      trend.period?.from,
+      trend.period?.to,
+      direction
+    );
+
+    await loadAnalytics({
+      period: selectedPeriod,
+      from: toDateParam(shiftedRange.start),
+      to: toDateParam(shiftedRange.end),
+    });
   }
 
   return (
@@ -157,7 +189,31 @@ export default function AnalyticsOverview({ initialTrend, initialByCategory, ini
                 </button>
               </div>
             ) : (
-              <p className="text-sm text-[var(--muted)]">{isLoading ? messages.analytics.refreshing : formatRangeLabel(trend.period, locale, dateFnsLocale, messages)}</p>
+              <div className="flex items-center gap-2 text-sm text-[var(--muted)]">
+                <button
+                  type="button"
+                  onClick={() => shiftSelectedPeriod(-1)}
+                  disabled={isLoading}
+                  aria-label={messages.common.previous}
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] bg-white text-base text-[var(--foreground)] transition hover:border-[var(--accent)] hover:text-[var(--accent-strong)] disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  ←
+                </button>
+                <p className="min-w-[14rem] text-center text-sm text-[var(--muted)]">
+                  {isLoading
+                    ? messages.analytics.refreshing
+                    : formatRangeLabel(trend.period, locale, dateFnsLocale, messages)}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => shiftSelectedPeriod(1)}
+                  disabled={isLoading || !canMoveForward}
+                  aria-label={messages.common.next}
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] bg-white text-base text-[var(--foreground)] transition hover:border-[var(--accent)] hover:text-[var(--accent-strong)] disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  →
+                </button>
+              </div>
             )}
           </div>
         </div>
@@ -165,7 +221,13 @@ export default function AnalyticsOverview({ initialTrend, initialByCategory, ini
         {error ? <div className="mt-6 rounded-2xl border border-rose-300 bg-rose-50 px-4 py-3 text-sm text-rose-800">{error}</div> : null}
       </section>
 
-      <section className="grid gap-5 xl:grid-cols-[1.15fr_0.85fr]">
+      <div
+        className={
+          "space-y-8 transition-all duration-300 " +
+          (isLoading ? "translate-y-1 opacity-60" : "translate-y-0 opacity-100")
+        }
+      >
+        <section className="grid gap-5 xl:grid-cols-[1.15fr_0.85fr]">
         <div className="glass-panel rounded-[1.75rem] p-6">
           <div className="flex items-center justify-between gap-4">
             <div>
@@ -192,23 +254,42 @@ export default function AnalyticsOverview({ initialTrend, initialByCategory, ini
                 </ResponsiveContainer>
               </div>
 
-              <div className="space-y-3">
-                {categoryChartData.map((category) => (
+              <div className="space-y-2">
+                {visibleCategoryItems.map((category) => (
                   <div key={category.categoryId} className="rounded-2xl border border-[var(--border)] bg-white/70 px-4 py-3">
-                    <div className="flex items-center justify-between gap-4">
-                      <div className="flex items-center gap-3">
-                        <span className="h-3.5 w-3.5 rounded-full border border-black/5" style={{ backgroundColor: category.color || expenseColor }} />
-                        <span className="font-medium text-[var(--foreground)]">{category.name}</span>
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-3">
+                          <span className="h-3.5 w-3.5 shrink-0 rounded-full border border-black/5" style={{ backgroundColor: category.color || expenseColor }} />
+                          <span className="truncate font-medium text-[var(--foreground)]">{category.name}</span>
+                        </div>
+                        <p className="mt-1.5 text-xs font-medium text-[var(--muted)]">
+                          {interpolate(messages.analytics.shareOfExpenses, {
+                            percent: category.sharePercent,
+                          })}
+                        </p>
                       </div>
-                      <span className="text-sm font-semibold text-[var(--foreground)]">{formatMoney(category.amount)}</span>
+                      <span className="shrink-0 text-sm font-semibold text-[var(--foreground)]">
+                        {formatMoney(category.amount)}
+                      </span>
                     </div>
-                    <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-stone-200/80">
-                      <div className="h-full rounded-full" style={{ width: String(Math.min(category.sharePercent, 100)) + "%", backgroundColor: category.color || expenseColor }} />
-                    </div>
-                    <p className="mt-2 text-xs font-medium text-[var(--muted)]">{interpolate(messages.analytics.shareOfExpenses, { percent: category.sharePercent })}</p>
                   </div>
                 ))}
               </div>
+
+              {categoryChartData.length > 8 ? (
+                <button
+                  type="button"
+                  onClick={() => setShowAllCategories((current) => !current)}
+                  className="mt-4 rounded-full border border-[var(--border)] bg-white px-4 py-2 text-sm font-semibold text-[var(--foreground)] transition hover:border-[var(--accent)] hover:text-[var(--accent-strong)]"
+                >
+                  {showAllCategories
+                    ? messages.analytics.showFewerCategories
+                    : interpolate(messages.analytics.showAllCategories, {
+                        count: categoryChartData.length - 8,
+                      })}
+                </button>
+              ) : null}
             </div>
           )}
 
@@ -244,9 +325,9 @@ export default function AnalyticsOverview({ initialTrend, initialByCategory, ini
             <CompareDeltaRow label={messages.common.balance} value={compare.change.balance} accent="neutral" locale={locale} currency={currency} messages={messages} />
           </div>
         </div>
-      </section>
+        </section>
 
-      <section className="glass-panel rounded-[1.75rem] p-6">
+        <section className="glass-panel rounded-[1.75rem] p-6">
         <div className="flex items-center justify-between gap-4">
           <div>
             <p className="text-sm font-medium text-[var(--muted)]">{messages.analytics.trendTitle}</p>
@@ -271,7 +352,8 @@ export default function AnalyticsOverview({ initialTrend, initialByCategory, ini
             </LineChart>
           </ResponsiveContainer>
         </div>
-      </section>
+        </section>
+      </div>
     </div>
   );
 }
