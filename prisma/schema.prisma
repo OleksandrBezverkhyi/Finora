@@ -61,9 +61,11 @@ model Transaction {
   date       DateTime        @default(now())
   comment    String?
   userId     String
-  categoryId String
+  categoryId String?
+  categoryName String        @db.VarChar(40)
+  categoryColor String?      @db.VarChar(7)
   user       User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  category   Category        @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  category   Category?       @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   createdAt  DateTime        @default(now())
   updatedAt  DateTime        @updatedAt
 

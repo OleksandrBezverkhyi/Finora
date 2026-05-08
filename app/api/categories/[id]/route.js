@@ -107,7 +107,49 @@ export async function DELETE(_request, { params }) {
     return NextResponse.json({ error: "Category cannot be deleted" }, { status: 403 });
   }
 
+  const [transactionsCount, budgetsCount] = await Promise.all([
+    prisma.transaction.count({
+      where: {
+        userId: user.id,
+        categoryId: ownedCategory.id,
+      },
+    }),
+    prisma.budget.count({
+      where: {
+        userId: user.id,
+        categoryId: ownedCategory.id,
+      },
+    }),
+  ]);
+
+  const deleteBudgets =
+    _request.nextUrl?.searchParams.get("deleteBudgets") === "1" ||
+    _request.nextUrl?.searchParams.get("deleteBudgets") === "true";
+
+  if (budgetsCount > 0 && !deleteBudgets) {
+    return NextResponse.json(
+      {
+        error: "Category delete needs confirmation because related budgets will also be removed",
+        code: "CATEGORY_DELETE_REQUIRES_CONFIRMATION",
+        details: {
+          budgetsCount,
+          transactionsCount,
+        },
+      },
+      { status: 409 }
+    );
+  }
+
   try {
+    if (deleteBudgets) {
+      await prisma.budget.deleteMany({
+        where: {
+          userId: user.id,
+          categoryId: ownedCategory.id,
+        },
+      });
+    }
+
     await prisma.category.delete({
       where: {
         id: ownedCategory.id,

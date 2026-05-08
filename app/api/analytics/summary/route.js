@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
+import { buildDateRange } from "@/lib/date";
 import prisma from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
+import { serializeTransactionRecord } from "@/lib/transactions";
 
 const summaryFiltersSchema = z.object({
   period: z.enum(["day", "week", "month", "custom"]).optional(),
@@ -18,74 +20,12 @@ function badRequest(message) {
   return NextResponse.json({ error: message }, { status: 400 });
 }
 
-function getPeriodRange(period) {
-  const now = new Date();
-  const start = new Date(now);
-  const end = new Date(now);
-
-  if (period === "day") {
-    start.setHours(0, 0, 0, 0);
-    end.setHours(23, 59, 59, 999);
-    return { start, end };
-  }
-
-  if (period === "week") {
-    const day = start.getDay();
-    const diff = day === 0 ? -6 : 1 - day;
-    start.setDate(start.getDate() + diff);
-    start.setHours(0, 0, 0, 0);
-    end.setDate(start.getDate() + 6);
-    end.setHours(23, 59, 59, 999);
-    return { start, end };
-  }
-
-  if (period === "month") {
-    start.setDate(1);
-    start.setHours(0, 0, 0, 0);
-    end.setMonth(end.getMonth() + 1, 0);
-    end.setHours(23, 59, 59, 999);
-    return { start, end };
-  }
-
-  return null;
-}
-
-function buildDateRange(filters) {
-  if (!filters.period || filters.period === "month") {
-    return getPeriodRange("month");
-  }
-
-  if (filters.period !== "custom") {
-    return getPeriodRange(filters.period);
-  }
-
-  const start = filters.from ? new Date(filters.from) : null;
-  const end = filters.to ? new Date(filters.to) : null;
-
-  if (start) {
-    start.setHours(0, 0, 0, 0);
-  }
-
-  if (end) {
-    end.setHours(23, 59, 59, 999);
-  }
-
-  return { start, end };
-}
-
 function amountToNumber(value) {
   return Number(value || 0);
 }
 
 function serializeCurrency(value) {
   return amountToNumber(value).toFixed(2);
-}
-
-function serializeTransaction(transaction) {
-  return {
-    ...transaction,
-    amount: transaction.amount.toString(),
-  };
 }
 
 export async function GET(request) {
@@ -115,7 +55,11 @@ export async function GET(request) {
   }
 
   const filters = parsedFilters.data;
-  const dateRange = buildDateRange(filters);
+  const dateRange = buildDateRange({
+    period: filters.period || "month",
+    from: filters.from,
+    to: filters.to,
+  });
 
   if (filters.period === "custom" && !dateRange.start && !dateRange.end) {
     return badRequest("Custom period requires from or to date");
@@ -163,7 +107,7 @@ export async function GET(request) {
       },
     }),
     prisma.transaction.groupBy({
-      by: ["categoryId"],
+      by: ["categoryId", "categoryName", "categoryColor"],
       where: expenseWhere,
       _sum: {
         amount: true,
@@ -185,6 +129,8 @@ export async function GET(request) {
         amount: true,
         date: true,
         comment: true,
+        categoryName: true,
+        categoryColor: true,
         category: {
           select: {
             id: true,
@@ -197,24 +143,6 @@ export async function GET(request) {
     }),
   ]);
 
-  const topCategoryIds = topExpenseGroups.map((item) => item.categoryId);
-  const categories = topCategoryIds.length
-    ? await prisma.category.findMany({
-        where: {
-          id: {
-            in: topCategoryIds,
-          },
-          userId: user.id,
-        },
-        select: {
-          id: true,
-          name: true,
-          color: true,
-        },
-      })
-    : [];
-
-  const categoriesById = new Map(categories.map((category) => [category.id, category]));
   const income = amountToNumber(incomeAggregate._sum.amount);
   const expense = amountToNumber(expenseAggregate._sum.amount);
   const balance = income - expense;
@@ -232,11 +160,11 @@ export async function GET(request) {
       balance: serializeCurrency(balance),
     },
     topExpenseCategories: topExpenseGroups.map((item) => ({
-      categoryId: item.categoryId,
-      name: categoriesById.get(item.categoryId)?.name || "Unknown category",
-      color: categoriesById.get(item.categoryId)?.color || null,
+      categoryId: item.categoryId || `deleted-${item.categoryName}`,
+      name: item.categoryName || "Unknown category",
+      color: item.categoryColor || null,
       amount: serializeCurrency(item._sum.amount),
     })),
-    recentTransactions: recentTransactions.map(serializeTransaction),
+    recentTransactions: recentTransactions.map(serializeTransactionRecord),
   });
 }

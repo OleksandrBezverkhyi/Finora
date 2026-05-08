@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 
 import DayFirstDateInput from "@/components/common/day-first-date-input";
 import { useLocale } from "@/components/common/locale-provider";
@@ -9,6 +9,7 @@ import { formatDateLocalized, interpolate } from "@/lib/i18n";
 
 const initialFilterState = { period: "", from: "", to: "", type: "", categoryId: "", q: "", min: "", max: "", sort: "date_desc" };
 const initialFieldErrors = { type: [], categoryId: [], amount: [], date: [], comment: [] };
+const DELETED_CATEGORY_OPTION = "__deleted_category__";
 
 export default function TransactionsManager({ categories, initialTransactions, initialPagination }) {
   const { locale, currencySymbol, formatMoney, messages, translateErrorMessage } = useLocale();
@@ -50,8 +51,14 @@ export default function TransactionsManager({ categories, initialTransactions, i
   const [editingId, setEditingId] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
   const [formData, setFormData] = useState(() => createInitialFormState(categories, initialTransactions[0]?.type));
+  const [deletedEditingCategory, setDeletedEditingCategory] = useState(null);
+  const formSectionRef = useRef(null);
 
   const formCategories = categories.filter((category) => category.type === formData.type);
+  const selectableFormCategories =
+    deletedEditingCategory && deletedEditingCategory.type === formData.type
+      ? [deletedEditingCategory, ...formCategories]
+      : formCategories;
   const filterCategories = filters.type ? categories.filter((category) => category.type === filters.type) : categories;
 
   async function fetchTransactions(nextPage = 1, nextFilters = filters) {
@@ -82,6 +89,7 @@ export default function TransactionsManager({ categories, initialTransactions, i
 
   function resetForm() {
     setEditingId(null);
+    setDeletedEditingCategory(null);
     setFormData(createInitialFormState(categories, formData.type));
     setFormError("");
     setFieldErrors(initialFieldErrors);
@@ -99,7 +107,16 @@ export default function TransactionsManager({ categories, initialTransactions, i
       const response = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...formData, amount: Number(formData.amount) }),
+        body: JSON.stringify({
+          ...formData,
+          categoryId:
+            formData.categoryId === DELETED_CATEGORY_OPTION ? categories.find((category) => category.type === formData.type)?.id || "" : formData.categoryId,
+          amount: Number(formData.amount),
+          preserveDeletedCategory:
+            editingId &&
+            deletedEditingCategory &&
+            formData.categoryId === DELETED_CATEGORY_OPTION,
+        }),
       });
       const data = await response.json();
       if (!response.ok) {
@@ -124,10 +141,32 @@ export default function TransactionsManager({ categories, initialTransactions, i
   }
 
   function handleEdit(transaction) {
+    const preservedDeletedCategory =
+      transaction.category.id
+        ? null
+        : {
+            id: DELETED_CATEGORY_OPTION,
+            name: transaction.category.name,
+            type: transaction.type,
+            color: transaction.category.color,
+            isDeleted: true,
+          };
+
     setEditingId(transaction.id);
     setFormError("");
     setFieldErrors(initialFieldErrors);
-    setFormData({ type: transaction.type, categoryId: transaction.category.id, amount: transaction.amount, date: formatDateInput(new Date(transaction.date)), comment: transaction.comment || "" });
+    setDeletedEditingCategory(preservedDeletedCategory);
+    setFormData({
+      type: transaction.type,
+      categoryId:
+        transaction.category.id || preservedDeletedCategory?.id || categories.find((category) => category.type === transaction.type)?.id || "",
+      amount: transaction.amount,
+      date: formatDateInput(new Date(transaction.date)),
+      comment: transaction.comment || "",
+    });
+    requestAnimationFrame(() => {
+      formSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
   }
 
   async function handleDelete(transactionId) {
@@ -153,7 +192,18 @@ export default function TransactionsManager({ categories, initialTransactions, i
     const { name, value } = event.target;
     if (name === "type") {
       const nextCategory = categories.find((category) => category.type === value);
-      setFormData((current) => ({ ...current, type: value, categoryId: nextCategory?.id || "" }));
+      setFormData((current) => {
+        const next = { ...current, type: value, categoryId: nextCategory?.id || "" };
+
+        if (deletedEditingCategory && deletedEditingCategory.type === value) {
+          next.categoryId =
+            current.categoryId === DELETED_CATEGORY_OPTION
+              ? DELETED_CATEGORY_OPTION
+              : next.categoryId;
+        }
+
+        return next;
+      });
       return;
     }
     setFormData((current) => ({ ...current, [name]: value }));
@@ -184,7 +234,7 @@ export default function TransactionsManager({ categories, initialTransactions, i
   return (
     <div className="space-y-6">
       <div className="grid gap-6 xl:grid-cols-[0.92fr_1.08fr]">
-        <section className="glass-panel rounded-[1.75rem] p-6 sm:p-8">
+        <section ref={formSectionRef} className="glass-panel rounded-[1.75rem] p-6 sm:p-8">
           <div className="space-y-3">
             <p className="eyebrow">{editingId ? messages.transactions.editEyebrow : messages.transactions.addEyebrow}</p>
             <h2 className="text-3xl font-semibold tracking-tight text-[var(--foreground)]">{editingId ? messages.transactions.editTitle : messages.transactions.addTitle}</h2>
@@ -200,7 +250,7 @@ export default function TransactionsManager({ categories, initialTransactions, i
           ) : (
             <form onSubmit={handleSubmit} className="mt-8 space-y-5">
               <label className="block space-y-2"><span className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--muted)]">{messages.common.type}</span><select name="type" value={formData.type} onChange={handleFormChange} className="w-full rounded-2xl border border-[var(--border)] bg-white px-4 py-3 text-base text-[var(--foreground)] outline-none transition focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-soft)]">{typeOptions.filter((option) => option.value).map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select>{renderFieldError("type")}</label>
-              <label className="block space-y-2"><span className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--muted)]">{messages.common.category}</span><select name="categoryId" value={formData.categoryId} onChange={handleFormChange} className="w-full rounded-2xl border border-[var(--border)] bg-white px-4 py-3 text-base text-[var(--foreground)] outline-none transition focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-soft)]">{formCategories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}</select>{renderFieldError("categoryId")}</label>
+              <label className="block space-y-2"><span className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--muted)]">{messages.common.category}</span><select name="categoryId" value={formData.categoryId} onChange={handleFormChange} className="w-full rounded-2xl border border-[var(--border)] bg-white px-4 py-3 text-base text-[var(--foreground)] outline-none transition focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-soft)]">{selectableFormCategories.map((category) => <option key={category.id} value={category.id}>{category.isDeleted ? `${category.name} (${messages.transactions.deletedCategoryLabel})` : category.name}</option>)}</select>{renderFieldError("categoryId")}</label>
               <div className="grid gap-4 sm:grid-cols-2">
                 <label className="block space-y-2"><span className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--muted)]">{messages.transactions.amountLabel}, {currencySymbol}</span><input name="amount" type="number" min="0" step="0.01" inputMode="decimal" value={formData.amount} onChange={handleFormChange} placeholder="0.00" className="w-full rounded-2xl border border-[var(--border)] bg-white px-4 py-3 text-base text-[var(--foreground)] outline-none transition placeholder:text-[var(--muted)]/70 focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-soft)]" />{renderFieldError("amount")}</label>
                 <label className="block space-y-2"><span className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--muted)]">{messages.common.date}</span><DayFirstDateInput name="date" value={formData.date} onChange={handleFormChange} className="w-full rounded-2xl border border-[var(--border)] bg-white px-4 py-3 text-base text-[var(--foreground)] outline-none transition placeholder:text-[var(--muted)]/70 focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-soft)]" />{renderFieldError("date")}</label>
@@ -260,7 +310,7 @@ export default function TransactionsManager({ categories, initialTransactions, i
                     <td className="px-4 py-4"><div className="flex items-center gap-3"><span className="h-3.5 w-3.5 rounded-full border border-black/5" style={{ backgroundColor: transaction.category.color || "#0F766E" }} /><span className="font-medium text-[var(--foreground)]">{transaction.category.name}</span></div></td>
                     <td className="px-4 py-4 text-sm text-[var(--muted)]">{transaction.comment || messages.common.noComment}</td>
                     <td className="px-4 py-4 text-sm font-semibold text-[var(--foreground)]">{formatMoney(transaction.amount)}</td>
-                    <td className="rounded-r-2xl px-4 py-4"><div className="flex flex-wrap gap-2"><button type="button" onClick={() => handleEdit(transaction)} className="rounded-full border border-[var(--border)] bg-white px-4 py-2 text-sm font-semibold text-[var(--foreground)] transition hover:border-[var(--accent)] hover:text-[var(--accent-strong)]">{messages.common.edit}</button><button type="button" onClick={() => handleDelete(transaction.id)} disabled={deletingId === transaction.id} className="rounded-full border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 transition hover:border-rose-300 hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-70">{deletingId === transaction.id ? messages.common.deleting : messages.common.delete}</button></div></td>
+                    <td className="rounded-r-2xl px-4 py-4"><div className="flex flex-wrap justify-end gap-2"><button type="button" onClick={() => handleEdit(transaction)} className="rounded-full border border-[var(--border)] bg-white px-4 py-2 text-sm font-semibold text-[var(--foreground)] transition hover:border-[var(--accent)] hover:text-[var(--accent-strong)]">{messages.common.edit}</button><button type="button" onClick={() => handleDelete(transaction.id)} disabled={deletingId === transaction.id} className="rounded-full border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 transition hover:border-rose-300 hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-70">{deletingId === transaction.id ? messages.common.deleting : messages.common.delete}</button></div></td>
                   </tr>
                 ))
               )}

@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 
 import DayFirstDateInput from "@/components/common/day-first-date-input";
 import { useLocale } from "@/components/common/locale-provider";
+import { canShiftPeriodForward, shiftPeriodRange, toDateParam } from "@/lib/date";
 import {
   formatDateLocalized,
   formatPlural,
@@ -32,6 +33,11 @@ export default function DashboardOverview({ initialSummary, initialRecommendatio
   const [recommendations, setRecommendations] = useState(initialRecommendations);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const canMoveForward = canShiftPeriodForward(
+    selectedPeriod,
+    summary.period?.from,
+    summary.period?.to
+  );
 
   async function loadDashboardData({ period, from, to }) {
     setIsLoading(true);
@@ -41,14 +47,12 @@ export default function DashboardOverview({ initialSummary, initialRecommendatio
       const params = new URLSearchParams();
       params.set("period", period);
 
-      if (period === "custom") {
-        if (from) {
-          params.set("from", from);
-        }
+      if (from) {
+        params.set("from", from);
+      }
 
-        if (to) {
-          params.set("to", to);
-        }
+      if (to) {
+        params.set("to", to);
       }
 
       const query = params.toString();
@@ -97,6 +101,29 @@ export default function DashboardOverview({ initialSummary, initialRecommendatio
 
   async function applyCustomRange() {
     await loadDashboardData({ period: "custom", from: customRange.from, to: customRange.to });
+  }
+
+  async function shiftSelectedPeriod(direction) {
+    if (selectedPeriod === "custom") {
+      return;
+    }
+
+    if (direction > 0 && !canMoveForward) {
+      return;
+    }
+
+    const shiftedRange = shiftPeriodRange(
+      selectedPeriod,
+      summary.period?.from,
+      summary.period?.to,
+      direction
+    );
+
+    await loadDashboardData({
+      period: selectedPeriod,
+      from: toDateParam(shiftedRange.start),
+      to: toDateParam(shiftedRange.end),
+    });
   }
 
   const localizedSources = recommendations.sources.map((source) => localizeRecommendationSource(source, locale));
@@ -155,9 +182,31 @@ export default function DashboardOverview({ initialSummary, initialRecommendatio
                 </button>
               </div>
             ) : (
-              <p className="text-sm text-[var(--muted)]">
-                {isLoading ? messages.dashboard.refreshing : formatPeriodLabel(summary.period, locale, messages)}
-              </p>
+              <div className="flex items-center gap-2 text-sm text-[var(--muted)]">
+                <button
+                  type="button"
+                  onClick={() => shiftSelectedPeriod(-1)}
+                  disabled={isLoading}
+                  aria-label={messages.common.previous}
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] bg-white text-base text-[var(--foreground)] transition hover:border-[var(--accent)] hover:text-[var(--accent-strong)] disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  ←
+                </button>
+                <p className="min-w-[14rem] text-center text-sm text-[var(--muted)]">
+                  {isLoading
+                    ? messages.dashboard.refreshing
+                    : formatPeriodLabel(summary.period, locale, messages)}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => shiftSelectedPeriod(1)}
+                  disabled={isLoading || !canMoveForward}
+                  aria-label={messages.common.next}
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] bg-white text-base text-[var(--foreground)] transition hover:border-[var(--accent)] hover:text-[var(--accent-strong)] disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  →
+                </button>
+              </div>
             )}
           </div>
         </div>
@@ -169,49 +218,55 @@ export default function DashboardOverview({ initialSummary, initialRecommendatio
         ) : null}
       </section>
 
-      <section className="grid gap-5 xl:grid-cols-[1.2fr_0.8fr]">
-        <div className="grid gap-5 sm:grid-cols-2">
-          <SummaryCard
-            label={messages.common.income}
-            value={formatMoney(summary.totals.income)}
-            hint={messages.dashboard.incomeHint}
-          />
-          <SummaryCard
-            label={messages.common.expense}
-            value={formatMoney(summary.totals.expense)}
-            hint={messages.dashboard.expenseHint}
-          />
-          <div className="glass-panel rounded-[1.75rem] p-6 sm:col-span-2">
-            <p className="text-sm font-medium text-[var(--muted)]">{messages.common.balance}</p>
-            <p className="mt-6 text-4xl font-semibold tracking-tight text-[var(--foreground)]">
-              {formatMoney(summary.totals.balance)}
-            </p>
-            <p className="mt-3 text-sm text-[var(--muted)]">{messages.dashboard.balanceHint}</p>
+      <div
+        className={
+          "space-y-8 transition-all duration-300 " +
+          (isLoading ? "translate-y-1 opacity-60" : "translate-y-0 opacity-100")
+        }
+      >
+        <section className="grid gap-5 xl:grid-cols-[1.2fr_0.8fr]">
+          <div className="grid gap-5 sm:grid-cols-2">
+            <SummaryCard
+              label={messages.common.income}
+              value={formatMoney(summary.totals.income)}
+              hint={messages.dashboard.incomeHint}
+            />
+            <SummaryCard
+              label={messages.common.expense}
+              value={formatMoney(summary.totals.expense)}
+              hint={messages.dashboard.expenseHint}
+            />
+            <div className="glass-panel rounded-[1.75rem] p-6 sm:col-span-2">
+              <p className="text-sm font-medium text-[var(--muted)]">{messages.common.balance}</p>
+              <p className="mt-6 text-4xl font-semibold tracking-tight text-[var(--foreground)]">
+                {formatMoney(summary.totals.balance)}
+              </p>
+              <p className="mt-3 text-sm text-[var(--muted)]">{messages.dashboard.balanceHint}</p>
+            </div>
           </div>
-        </div>
 
-        <div className="glass-panel rounded-[1.75rem] p-6">
-          <p className="text-sm font-medium text-[var(--muted)]">{messages.dashboard.topExpenseCategories}</p>
-          <div className="mt-6 space-y-4">
-            {summary.topExpenseCategories.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-[var(--border)] px-4 py-5 text-sm text-[var(--muted)]">
-                {messages.dashboard.noTopExpenseCategories}
-              </div>
-            ) : (
-              summary.topExpenseCategories.map((category, index) => (
-                <div key={category.categoryId} className="flex items-center justify-between rounded-2xl border border-[var(--border)] bg-white/70 px-4 py-3">
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm font-semibold text-[var(--muted)]">#{index + 1}</span>
-                    <span className="h-3.5 w-3.5 rounded-full border border-black/5" style={{ backgroundColor: category.color || "#C2410C" }} />
-                    <span className="font-medium text-[var(--foreground)]">{category.name}</span>
-                  </div>
-                  <span className="text-sm font-semibold text-[var(--foreground)]">{formatMoney(category.amount)}</span>
+          <div className="glass-panel rounded-[1.75rem] p-6">
+            <p className="text-sm font-medium text-[var(--muted)]">{messages.dashboard.topExpenseCategories}</p>
+            <div className="mt-6 space-y-4">
+              {summary.topExpenseCategories.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-[var(--border)] px-4 py-5 text-sm text-[var(--muted)]">
+                  {messages.dashboard.noTopExpenseCategories}
                 </div>
-              ))
-            )}
+              ) : (
+                summary.topExpenseCategories.map((category, index) => (
+                  <div key={category.categoryId} className="flex items-center justify-between rounded-2xl border border-[var(--border)] bg-white/70 px-4 py-3">
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm font-semibold text-[var(--muted)]">#{index + 1}</span>
+                      <span className="h-3.5 w-3.5 rounded-full border border-black/5" style={{ backgroundColor: category.color || "#C2410C" }} />
+                      <span className="font-medium text-[var(--foreground)]">{category.name}</span>
+                    </div>
+                    <span className="text-sm font-semibold text-[var(--foreground)]">{formatMoney(category.amount)}</span>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
 
       <section className="glass-panel rounded-[1.75rem] p-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -311,6 +366,7 @@ export default function DashboardOverview({ initialSummary, initialRecommendatio
           )}
         </div>
       </section>
+      </div>
     </div>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { useLocale } from "@/components/common/locale-provider";
 
@@ -12,10 +12,12 @@ const initialErrors = {
   newPassword: [],
   confirmNewPassword: [],
 };
+const previewPageSize = 5;
 
 export default function ProfileSettings({ initialProfile }) {
   const router = useRouter();
   const { messages, translateErrorMessage, setCurrency } = useLocale();
+  const importSectionRef = useRef(null);
   const [formData, setFormData] = useState({
     name: initialProfile.name,
     email: initialProfile.email,
@@ -31,11 +33,96 @@ export default function ProfileSettings({ initialProfile }) {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
+  const [importFile, setImportFile] = useState(null);
+  const [importSummary, setImportSummary] = useState(null);
+  const [importPreview, setImportPreview] = useState([]);
+  const [importMessage, setImportMessage] = useState("");
+  const [importFormError, setImportFormError] = useState("");
+  const [isPreviewingImport, setIsPreviewingImport] = useState(false);
+  const [isImportingCsv, setIsImportingCsv] = useState(false);
+  const [showImportResults, setShowImportResults] = useState(false);
+  const [importPreviewPage, setImportPreviewPage] = useState(1);
+
+  const totalPreviewPages = Math.max(1, Math.ceil(importPreview.length / previewPageSize));
+  const paginatedPreview = importPreview.slice(
+    (importPreviewPage - 1) * previewPageSize,
+    importPreviewPage * previewPageSize
+  );
 
   function handleInputChange(event) {
     const { name, value } = event.target;
     setFormData((current) => ({ ...current, [name]: value }));
     setSuccessMessage("");
+  }
+
+  function handleImportFileChange(event) {
+    const nextFile = event.target.files?.[0] || null;
+    setImportFile(nextFile);
+    setImportSummary(null);
+    setImportPreview([]);
+    setImportMessage("");
+    setImportFormError("");
+    setShowImportResults(false);
+    setImportPreviewPage(1);
+  }
+
+  async function submitCsvImport(mode) {
+    if (!importFile) {
+      setImportFormError(translateErrorMessage("CSV file is required."));
+      return;
+    }
+
+    const setLoading = mode === "import" ? setIsImportingCsv : setIsPreviewingImport;
+    setLoading(true);
+    setImportFormError("");
+    setImportMessage("");
+
+    try {
+      const formData = new FormData();
+      formData.append("file", importFile);
+      formData.append("mode", mode);
+
+      const response = await fetch("/api/import/csv", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        setImportFormError(translateErrorMessage(data.error || "Unable to import transactions right now."));
+        setImportSummary(data.summary || null);
+        setImportPreview(
+          (data.preview || []).map((row) => ({
+            ...row,
+            messages: row.messages?.map((message) => translateErrorMessage(message)) || [],
+          }))
+        );
+        setShowImportResults(true);
+        setImportPreviewPage(1);
+        return;
+      }
+
+      setImportSummary(data.summary || null);
+      setImportPreview(
+        (data.preview || []).map((row) => ({
+          ...row,
+          messages: row.messages?.map((message) => translateErrorMessage(message)) || [],
+        }))
+      );
+      setImportMessage(
+        mode === "import" ? translateErrorMessage(data.message || "") : ""
+      );
+      setShowImportResults(true);
+      setImportPreviewPage(1);
+
+      if (mode === "import") {
+        router.refresh();
+      }
+    } catch {
+      setImportFormError(translateErrorMessage("Unable to import transactions right now."));
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function handleSubmit(event) {
@@ -108,9 +195,29 @@ export default function ProfileSettings({ initialProfile }) {
     return <p className="mt-2 text-sm text-rose-700">{error}</p>;
   }
 
+  function getPreviewStatusLabel(status) {
+    if (status === "ready") {
+      return messages.importExport.previewStatusReady;
+    }
+
+    return messages.importExport.previewStatusInvalid;
+  }
+
+  function hideImportPreview() {
+    setShowImportResults(false);
+    setImportPreviewPage(1);
+
+    requestAnimationFrame(() => {
+      importSectionRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    });
+  }
+
   return (
     <div className="space-y-8">
-      <section className="glass-panel rounded-[1.75rem] p-6 sm:p-8">
+      <section ref={importSectionRef} className="glass-panel rounded-[1.75rem] p-6 sm:p-8">
         <div className="space-y-3">
           <p className="eyebrow">{messages.profile.accountEyebrow}</p>
           <h2 className="text-3xl font-semibold tracking-tight text-[var(--foreground)]">
@@ -268,6 +375,173 @@ export default function ProfileSettings({ initialProfile }) {
             {isSubmitting ? messages.profile.saving : messages.profile.save}
           </button>
         </form>
+      </section>
+
+      <section className="glass-panel rounded-[1.75rem] p-6 sm:p-8">
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
+          <div className="space-y-3">
+            <p className="eyebrow">{messages.importExport.importEyebrow}</p>
+            <h2 className="text-3xl font-semibold tracking-tight text-[var(--foreground)]">
+              {messages.importExport.importTitle}
+            </h2>
+            <p className="muted max-w-2xl text-sm leading-6">
+              {messages.importExport.importDescription}
+            </p>
+            <p className="text-sm font-medium text-[var(--foreground)]/70">
+              {messages.importExport.importFormatNote}
+            </p>
+          </div>
+
+          <div className="w-full max-w-xl space-y-4">
+            <label className="block space-y-2">
+              <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--muted)]">
+                {messages.importExport.importFileLabel}
+              </span>
+              <input
+                type="file"
+                accept=".csv,text/csv"
+                onChange={handleImportFileChange}
+                className="w-full rounded-2xl border border-[var(--border)] bg-white px-4 py-3 text-sm text-[var(--foreground)] file:mr-4 file:rounded-full file:border-0 file:bg-[var(--accent-soft)] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-[var(--accent-strong)]"
+              />
+            </label>
+
+            <div className="flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={() => submitCsvImport("preview")}
+                disabled={!importFile || isPreviewingImport || isImportingCsv}
+                className="rounded-full border border-[var(--accent)] bg-white px-5 py-3 text-sm font-semibold text-[var(--accent-strong)] transition hover:bg-[var(--accent-soft)] disabled:cursor-not-allowed disabled:opacity-70"
+              >
+                {isPreviewingImport
+                  ? messages.importExport.previewing
+                  : messages.importExport.previewButton}
+              </button>
+              {showImportResults ? (
+                <button
+                  type="button"
+                  onClick={hideImportPreview}
+                  className="rounded-full border border-[var(--border)] bg-white px-5 py-3 text-sm font-semibold text-[var(--foreground)] transition hover:border-[var(--accent)] hover:bg-[var(--accent-soft)] hover:text-[var(--accent-strong)]"
+                >
+                  {messages.importExport.hidePreviewButton}
+                </button>
+              ) : null}
+              <button
+                type="button"
+                onClick={() => submitCsvImport("import")}
+                disabled={!importFile || isPreviewingImport || isImportingCsv}
+                className="rounded-full bg-[var(--accent)] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[var(--accent-strong)] disabled:cursor-not-allowed disabled:opacity-70"
+              >
+                {isImportingCsv
+                  ? messages.importExport.importing
+                  : messages.importExport.importButton}
+              </button>
+            </div>
+
+            {importFormError ? (
+              <div className="rounded-2xl border border-rose-300 bg-rose-50 px-4 py-3 text-sm text-rose-800">
+                {importFormError}
+              </div>
+            ) : null}
+
+            {importMessage ? (
+              <div className="rounded-2xl border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+                {importMessage}
+              </div>
+            ) : null}
+
+            {showImportResults && importSummary ? (
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="rounded-2xl border border-[var(--border)] bg-white/70 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--muted)]">
+                    {messages.importExport.summaryTitle}
+                  </p>
+                  <div className="mt-3 space-y-2 text-sm text-[var(--foreground)]">
+                    <p>{messages.importExport.summaryTotal.replace("{count}", String(importSummary.totalRows))}</p>
+                    <p>{messages.importExport.summaryValid.replace("{count}", String(importSummary.validRows))}</p>
+                    <p>{messages.importExport.summaryCategoriesToCreate.replace("{count}", String(importSummary.categoriesToCreate))}</p>
+                    <p>{messages.importExport.summarySkipped.replace("{count}", String(importSummary.skippedEmptyRows))}</p>
+                    <p>{messages.importExport.summaryImported.replace("{count}", String(importSummary.importedRows))}</p>
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-[var(--border)] bg-white/70 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--muted)]">
+                    {messages.importExport.previewTitle}
+                  </p>
+                  <div className="mt-3 space-y-3">
+                    {importPreview.length ? (
+                      paginatedPreview.map((row) => (
+                        <div
+                          key={`${row.rowNumber}-${row.category}-${row.amount}`}
+                          className="rounded-2xl border border-[var(--border)] bg-white px-4 py-3 text-sm"
+                        >
+                          <div className="flex items-center justify-between gap-4">
+                            <p className="font-semibold text-[var(--foreground)]">
+                              #{row.rowNumber} · {row.category}
+                            </p>
+                            <span className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted)]">
+                              {getPreviewStatusLabel(row.status)}
+                            </span>
+                          </div>
+                          <p className="mt-1 text-[var(--foreground)]/80">
+                            {row.type} · {row.amount} · {row.date}
+                          </p>
+                          {row.comment ? (
+                            <p className="mt-1 text-[var(--muted)]">{row.comment}</p>
+                          ) : null}
+                          {row.messages?.length ? (
+                            <ul className="mt-2 space-y-1 text-xs text-rose-700">
+                              {row.messages.map((message) => (
+                                <li key={message}>{message}</li>
+                              ))}
+                            </ul>
+                          ) : null}
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-sm text-[var(--muted)]">
+                        {messages.importExport.previewEmpty}
+                      </p>
+                    )}
+                    {importPreview.length > previewPageSize ? (
+                      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[var(--border)] bg-white px-4 py-3">
+                        <p className="text-sm text-[var(--muted)]">
+                          {messages.importExport.previewPage
+                            .replace("{current}", String(importPreviewPage))
+                            .replace("{total}", String(totalPreviewPages))}
+                        </p>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setImportPreviewPage((current) => Math.max(1, current - 1))
+                            }
+                            disabled={importPreviewPage === 1}
+                            className="rounded-full border border-[var(--border)] bg-white px-4 py-2 text-sm font-semibold text-[var(--foreground)] transition hover:border-[var(--accent)] hover:text-[var(--accent-strong)] disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            {messages.importExport.previousPage}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setImportPreviewPage((current) =>
+                                Math.min(totalPreviewPages, current + 1)
+                              )
+                            }
+                            disabled={importPreviewPage === totalPreviewPages}
+                            className="rounded-full border border-[var(--border)] bg-white px-4 py-2 text-sm font-semibold text-[var(--foreground)] transition hover:border-[var(--accent)] hover:text-[var(--accent-strong)] disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            {messages.importExport.nextPage}
+                          </button>
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+              </div>
+            ) : null}
+          </div>
+        </div>
       </section>
 
       <section className="glass-panel rounded-[1.75rem] p-6 sm:p-8">

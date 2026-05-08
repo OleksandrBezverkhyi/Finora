@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { OVERALL_EXPENSES_CATEGORY_NAME } from "@/lib/budgets";
 import prisma from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
+import { buildTransactionCategorySnapshot, serializeTransactionRecord } from "@/lib/transactions";
 import { transactionSchema } from "@/lib/validators";
 
 function unauthorizedResponse() {
@@ -22,6 +23,10 @@ async function getOwnedTransaction(id, userId) {
     },
     select: {
       id: true,
+      type: true,
+      categoryId: true,
+      categoryName: true,
+      categoryColor: true,
     },
   });
 }
@@ -44,13 +49,6 @@ async function getOwnedCategory(categoryId, userId) {
   });
 }
 
-function serializeTransaction(transaction) {
-  return {
-    ...transaction,
-    amount: transaction.amount.toString(),
-  };
-}
-
 export async function PUT(request, { params }) {
   const user = await getSessionUser();
 
@@ -67,6 +65,7 @@ export async function PUT(request, { params }) {
 
   try {
     const body = await request.json();
+    const preserveDeletedCategory = body.preserveDeletedCategory === true;
     const parsedData = transactionSchema.safeParse(body);
 
     if (!parsedData.success) {
@@ -80,6 +79,56 @@ export async function PUT(request, { params }) {
     }
 
     const transactionData = parsedData.data;
+
+    if (preserveDeletedCategory) {
+      if (ownedTransaction.categoryId) {
+        return badRequest("Deleted category can only be preserved for transactions that no longer have a linked category");
+      }
+
+      if (transactionData.type !== ownedTransaction.type) {
+        return badRequest("Transaction type must match preserved deleted category type");
+      }
+
+      const transaction = await prisma.transaction.update({
+        where: {
+          id: ownedTransaction.id,
+        },
+        data: {
+          type: transactionData.type,
+          amount: transactionData.amount,
+          date: transactionData.date,
+          comment: transactionData.comment,
+          categoryId: null,
+          categoryName: ownedTransaction.categoryName,
+          categoryColor: ownedTransaction.categoryColor,
+        },
+        select: {
+          id: true,
+          type: true,
+          amount: true,
+          date: true,
+          comment: true,
+          categoryName: true,
+          categoryColor: true,
+          createdAt: true,
+          updatedAt: true,
+          category: {
+            select: {
+              id: true,
+              name: true,
+              type: true,
+              color: true,
+            },
+          },
+        },
+      });
+
+      return NextResponse.json({
+        ok: true,
+        transaction: serializeTransactionRecord(transaction),
+      });
+    }
+
     const ownedCategory = await getOwnedCategory(transactionData.categoryId, user.id);
 
     if (!ownedCategory) {
@@ -94,13 +143,18 @@ export async function PUT(request, { params }) {
       where: {
         id: ownedTransaction.id,
       },
-      data: transactionData,
+      data: {
+        ...transactionData,
+        ...buildTransactionCategorySnapshot(ownedCategory),
+      },
       select: {
         id: true,
         type: true,
         amount: true,
         date: true,
         comment: true,
+        categoryName: true,
+        categoryColor: true,
         createdAt: true,
         updatedAt: true,
         category: {
@@ -116,7 +170,7 @@ export async function PUT(request, { params }) {
 
     return NextResponse.json({
       ok: true,
-      transaction: serializeTransaction(transaction),
+      transaction: serializeTransactionRecord(transaction),
     });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2003") {
