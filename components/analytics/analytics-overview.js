@@ -234,109 +234,9 @@ export default function AnalyticsOverview({ initialTrend, initialByCategory, ini
           (isLoading ? "translate-y-1 opacity-60" : "translate-y-0 opacity-100")
         }
       >
-        <section className="grid gap-5 xl:grid-cols-[1.15fr_0.85fr]">
-        <div className="glass-panel rounded-[1.75rem] p-6">
+        <section className="glass-panel rounded-[1.75rem] p-6">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <p className="text-sm font-medium text-[var(--muted)]">{messages.analytics.expenseStructure}</p>
-              <p className="mt-2 text-sm text-[var(--muted)]">{messages.analytics.expenseStructureDescription}</p>
-            </div>
-            <span className="rounded-full border border-[var(--border)] bg-white/75 px-3 py-1 text-sm font-medium text-[var(--foreground)]">
-              {interpolate(messages.analytics.totalExpenses, { amount: formatMoney(byCategory.totalExpense) })}
-            </span>
-          </div>
-
-          {categoryChartData.length === 0 ? (
-            <div className="mt-6 rounded-2xl border border-dashed border-[var(--border)] px-4 py-10 text-sm text-[var(--muted)]">{messages.analytics.noExpenseData}</div>
-          ) : (
-            <div className="mt-6 grid gap-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
-              <div className="h-72">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie data={categoryChartData} dataKey="amount" nameKey="name" innerRadius={64} outerRadius={96} paddingAngle={3}>
-                      {categoryChartData.map((entry) => <Cell key={entry.categoryId} fill={entry.color || expenseColor} />)}
-                    </Pie>
-                    <Tooltip content={<CategoryTooltip locale={locale} currency={currency} shareTemplate={messages.analytics.shareOfExpenses} />} />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-
-              <div className="space-y-2">
-                {visibleCategoryItems.map((category) => (
-                  <div key={category.categoryId} className="rounded-2xl border border-[var(--border)] bg-white/70 px-4 py-3">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-3">
-                          <span className="h-3.5 w-3.5 shrink-0 rounded-full border border-black/5" style={{ backgroundColor: category.color || expenseColor }} />
-                          <span className="truncate font-medium text-[var(--foreground)]">{category.name}</span>
-                        </div>
-                        <p className="mt-1.5 text-xs font-medium text-[var(--muted)]">
-                          {interpolate(messages.analytics.shareOfExpenses, {
-                            percent: category.sharePercent,
-                          })}
-                        </p>
-                      </div>
-                      <span className="shrink-0 text-sm font-semibold text-[var(--foreground)]">
-                        {formatMoney(category.amount)}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {categoryChartData.length > 8 ? (
-                <button
-                  type="button"
-                  onClick={() => setShowAllCategories((current) => !current)}
-                  className="mt-4 rounded-full border border-[var(--border)] bg-white px-4 py-2 text-sm font-semibold text-[var(--foreground)] transition hover:border-[var(--accent)] hover:text-[var(--accent-strong)]"
-                >
-                  {showAllCategories
-                    ? messages.analytics.showFewerCategories
-                    : interpolate(messages.analytics.showAllCategories, {
-                        count: categoryChartData.length - 8,
-                      })}
-                </button>
-              ) : null}
-            </div>
-          )}
-
-          {categoryChartData.length > 0 ? (
-            <div className="mt-8 h-72">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={categoryChartData} layout="vertical" margin={{ top: 8, right: 12, bottom: 0, left: 12 }}>
-                  <CartesianGrid stroke="rgba(76, 58, 35, 0.08)" horizontal={false} />
-                  <XAxis type="number" hide />
-                  <YAxis type="category" dataKey="name" tickLine={false} axisLine={false} width={100} tick={{ fill: "#6d655d", fontSize: 12 }} />
-                  <Tooltip content={<CategoryTooltip locale={locale} currency={currency} shareTemplate={messages.analytics.shareOfExpenses} />} />
-                  <Bar dataKey="amount" radius={[0, 10, 10, 0]}>
-                    {categoryChartData.map((entry) => <Cell key={entry.categoryId} fill={entry.color || expenseColor} />)}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          ) : null}
-        </div>
-
-        <div className="glass-panel rounded-[1.75rem] p-6">
-          <p className="text-sm font-medium text-[var(--muted)]">{messages.analytics.compareTitle}</p>
-          <p className="mt-2 text-sm text-[var(--muted)]">{messages.analytics.compareDescription}</p>
-
-          <div className="mt-6 grid gap-4 sm:grid-cols-2">
-            <CompareSnapshotCard label={messages.common.thisPeriod} values={compare.current} period={compare.period.current} locale={locale} currency={currency} messages={messages} dateFnsLocale={dateFnsLocale} />
-            <CompareSnapshotCard label={messages.common.previousPeriod} values={compare.previous} period={compare.period.previous} locale={locale} currency={currency} messages={messages} dateFnsLocale={dateFnsLocale} />
-          </div>
-
-          <div className="mt-6 space-y-3">
-            <CompareDeltaRow label={messages.common.income} value={compare.change.income} accent="positive" locale={locale} currency={currency} messages={messages} />
-            <CompareDeltaRow label={messages.common.expense} value={compare.change.expense} accent="expense" locale={locale} currency={currency} messages={messages} />
-            <CompareDeltaRow label={messages.common.balance} value={compare.change.balance} accent="neutral" locale={locale} currency={currency} messages={messages} />
-          </div>
-        </div>
-        </section>
-
-        <section className="glass-panel rounded-[1.75rem] p-6">
-        <div className="flex items-center justify-between gap-4">
-          <div>
             <p className="text-sm font-medium text-[var(--muted)]">{messages.analytics.trendTitle}</p>
             <p className="mt-2 text-sm text-[var(--muted)]">{messages.analytics.trendDescription}</p>
           </div>
@@ -357,8 +257,108 @@ export default function AnalyticsOverview({ initialTrend, initialByCategory, ini
               <Line type="monotone" dataKey="income" name={messages.common.income} stroke={incomeColor} strokeWidth={3} dot={false} />
               <Line type="monotone" dataKey="expense" name={messages.common.expense} stroke={expenseColor} strokeWidth={3} dot={false} />
             </LineChart>
-          </ResponsiveContainer>
-        </div>
+            </ResponsiveContainer>
+          </div>
+        </section>
+
+        <section className="grid gap-5 xl:grid-cols-[1.15fr_0.85fr]">
+          <div className="glass-panel rounded-[1.75rem] p-6">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-sm font-medium text-[var(--muted)]">{messages.analytics.expenseStructure}</p>
+                <p className="mt-2 text-sm text-[var(--muted)]">{messages.analytics.expenseStructureDescription}</p>
+              </div>
+              <span className="rounded-full border border-[var(--border)] bg-white/75 px-3 py-1 text-sm font-medium text-[var(--foreground)]">
+                {interpolate(messages.analytics.totalExpenses, { amount: formatMoney(byCategory.totalExpense) })}
+              </span>
+            </div>
+
+            {categoryChartData.length === 0 ? (
+              <div className="mt-6 rounded-2xl border border-dashed border-[var(--border)] px-4 py-10 text-sm text-[var(--muted)]">{messages.analytics.noExpenseData}</div>
+            ) : (
+              <div className="mt-6 grid gap-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
+                <div className="h-72">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie data={categoryChartData} dataKey="amount" nameKey="name" innerRadius={64} outerRadius={96} paddingAngle={3}>
+                        {categoryChartData.map((entry) => <Cell key={entry.categoryId} fill={entry.color || expenseColor} />)}
+                      </Pie>
+                      <Tooltip content={<CategoryTooltip locale={locale} currency={currency} shareTemplate={messages.analytics.shareOfExpenses} />} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+
+                <div className="space-y-2">
+                  {visibleCategoryItems.map((category) => (
+                    <div key={category.categoryId} className="rounded-2xl border border-[var(--border)] bg-white/70 px-4 py-3">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-3">
+                            <span className="h-3.5 w-3.5 shrink-0 rounded-full border border-black/5" style={{ backgroundColor: category.color || expenseColor }} />
+                            <span className="truncate font-medium text-[var(--foreground)]">{category.name}</span>
+                          </div>
+                          <p className="mt-1.5 text-xs font-medium text-[var(--muted)]">
+                            {interpolate(messages.analytics.shareOfExpenses, {
+                              percent: category.sharePercent,
+                            })}
+                          </p>
+                        </div>
+                        <span className="shrink-0 text-sm font-semibold text-[var(--foreground)]">
+                          {formatMoney(category.amount)}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {categoryChartData.length > 8 ? (
+                  <button
+                    type="button"
+                    onClick={() => setShowAllCategories((current) => !current)}
+                    className="mt-4 rounded-full border border-[var(--border)] bg-white px-4 py-2 text-sm font-semibold text-[var(--foreground)] transition hover:border-[var(--accent)] hover:text-[var(--accent-strong)]"
+                  >
+                    {showAllCategories
+                      ? messages.analytics.showFewerCategories
+                      : interpolate(messages.analytics.showAllCategories, {
+                          count: categoryChartData.length - 8,
+                        })}
+                  </button>
+                ) : null}
+              </div>
+            )}
+
+            {categoryChartData.length > 0 ? (
+              <div className="mt-8 h-72">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={categoryChartData} layout="vertical" margin={{ top: 8, right: 12, bottom: 0, left: 12 }}>
+                    <CartesianGrid stroke="rgba(76, 58, 35, 0.08)" horizontal={false} />
+                    <XAxis type="number" hide />
+                    <YAxis type="category" dataKey="name" tickLine={false} axisLine={false} width={100} tick={{ fill: "#6d655d", fontSize: 12 }} />
+                    <Tooltip content={<CategoryTooltip locale={locale} currency={currency} shareTemplate={messages.analytics.shareOfExpenses} />} />
+                    <Bar dataKey="amount" radius={[0, 10, 10, 0]}>
+                      {categoryChartData.map((entry) => <Cell key={entry.categoryId} fill={entry.color || expenseColor} />)}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            ) : null}
+          </div>
+
+          <div className="glass-panel rounded-[1.75rem] p-6">
+            <p className="text-sm font-medium text-[var(--muted)]">{messages.analytics.compareTitle}</p>
+            <p className="mt-2 text-sm text-[var(--muted)]">{messages.analytics.compareDescription}</p>
+
+            <div className="mt-6 grid gap-4 sm:grid-cols-2">
+              <CompareSnapshotCard label={messages.common.thisPeriod} values={compare.current} period={compare.period.current} locale={locale} currency={currency} messages={messages} dateFnsLocale={dateFnsLocale} />
+              <CompareSnapshotCard label={messages.common.previousPeriod} values={compare.previous} period={compare.period.previous} locale={locale} currency={currency} messages={messages} dateFnsLocale={dateFnsLocale} />
+            </div>
+
+            <div className="mt-6 space-y-3">
+              <CompareDeltaRow label={messages.common.income} value={compare.change.income} accent="positive" locale={locale} currency={currency} messages={messages} />
+              <CompareDeltaRow label={messages.common.expense} value={compare.change.expense} accent="expense" locale={locale} currency={currency} messages={messages} />
+              <CompareDeltaRow label={messages.common.balance} value={compare.change.balance} accent="neutral" locale={locale} currency={currency} messages={messages} />
+            </div>
+          </div>
         </section>
       </div>
     </div>
