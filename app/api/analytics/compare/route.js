@@ -5,7 +5,7 @@ import { buildAnalyticsDateRange, getCompareAnalytics } from "@/lib/analytics";
 import { getSessionUser } from "@/lib/session";
 
 const analyticsFiltersSchema = z.object({
-  period: z.enum(["day", "week", "month", "custom"]).optional(),
+  period: z.enum(["day", "week", "month", "custom", "all"]).optional(),
   from: z.coerce.date().optional(),
   to: z.coerce.date().optional(),
 });

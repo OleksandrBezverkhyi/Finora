@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { buildDateRange } from "@/lib/date";
+import { resolveAnalyticsDateRange } from "@/lib/analytics";
 import prisma from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
 import { serializeTransactionRecord } from "@/lib/transactions";
 
 const summaryFiltersSchema = z.object({
-  period: z.enum(["day", "week", "month", "custom"]).optional(),
+  period: z.enum(["day", "week", "month", "custom", "all"]).optional(),
   from: z.coerce.date().optional(),
   to: z.coerce.date().optional(),
 });
@@ -55,7 +55,8 @@ export async function GET(request) {
   }
 
   const filters = parsedFilters.data;
-  const dateRange = buildDateRange({
+  const dateRange = await resolveAnalyticsDateRange({
+    userId: user.id,
     period: filters.period || "month",
     from: filters.from,
     to: filters.to,
