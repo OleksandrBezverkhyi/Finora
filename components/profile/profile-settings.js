@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 
+import SignOutButton from "@/components/common/sign-out-button";
 import { useLocale } from "@/components/common/locale-provider";
 
 const initialErrors = {
@@ -14,7 +15,7 @@ const initialErrors = {
 };
 const previewPageSize = 5;
 
-export default function ProfileSettings({ initialProfile }) {
+export default function ProfileSettings({ initialProfile, signOutAction }) {
   const router = useRouter();
   const { messages, translateErrorMessage, setCurrency } = useLocale();
   const importSectionRef = useRef(null);
@@ -631,6 +632,31 @@ export default function ProfileSettings({ initialProfile }) {
             >
               {messages.importExport.exportButton}
             </a>
+          </div>
+        </div>
+      </section>
+
+      <section className="glass-panel rounded-[1.75rem] p-6 sm:p-8">
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+          <div className="space-y-3">
+            <p className="eyebrow">{messages.common.signOut}</p>
+            <h2 className="text-3xl font-semibold tracking-tight text-[var(--foreground)]">
+              {messages.common.signOutConfirmTitle}
+            </h2>
+            <p className="muted max-w-2xl text-sm leading-6">
+              {messages.common.signOutConfirmDescription}
+            </p>
+          </div>
+
+          <div className="flex flex-wrap gap-3">
+            <SignOutButton
+              action={signOutAction}
+              buttonLabel={messages.common.signOut}
+              confirmTitle={messages.common.signOutConfirmTitle}
+              confirmDescription={messages.common.signOutConfirmDescription}
+              cancelLabel={messages.common.signOutConfirmCancel}
+              confirmLabel={messages.common.signOutConfirmAction}
+            />
           </div>
         </div>
       </section>

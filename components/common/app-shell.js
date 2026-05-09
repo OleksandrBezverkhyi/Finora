@@ -2,16 +2,8 @@ import Link from "next/link";
 
 import Container from "@/components/common/container";
 import LocaleSwitcher from "@/components/common/locale-switcher";
-import SignOutButton from "@/components/common/sign-out-button";
-import { signOut } from "@/lib/auth";
 import { getServerMessages } from "@/lib/server-locale";
 import { getSessionUser } from "@/lib/session";
-
-async function handleSignOut() {
-  "use server";
-
-  await signOut({ redirectTo: "/login" });
-}
 
 export default async function AppShell({ children }) {
   const user = await getSessionUser();
@@ -65,15 +57,6 @@ export default async function AppShell({ children }) {
                   )
                 )}
               </nav>
-
-              <SignOutButton
-                action={handleSignOut}
-                buttonLabel={messages.common.signOut}
-                confirmTitle={messages.common.signOutConfirmTitle}
-                confirmDescription={messages.common.signOutConfirmDescription}
-                cancelLabel={messages.common.signOutConfirmCancel}
-                confirmLabel={messages.common.signOutConfirmAction}
-              />
             </div>
           </div>
         </header>

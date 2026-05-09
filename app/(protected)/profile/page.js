@@ -1,6 +1,13 @@
 import ProfileSettings from "@/components/profile/profile-settings";
+import { signOut } from "@/lib/auth";
 import { getServerMessages } from "@/lib/server-locale";
 import { requireSession } from "@/lib/session";
+
+async function handleSignOut() {
+  "use server";
+
+  await signOut({ redirectTo: "/login" });
+}
 
 export default async function ProfilePage() {
   const session = await requireSession();
@@ -26,7 +33,7 @@ export default async function ProfilePage() {
         </div>
       </section>
 
-      <ProfileSettings initialProfile={initialProfile} />
+      <ProfileSettings initialProfile={initialProfile} signOutAction={handleSignOut} />
     </div>
   );
 }
