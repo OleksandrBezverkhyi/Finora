@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { buildDateRange, normalizeEnd, normalizeStart } from "@/lib/date";
+import { resolveAnalyticsDateRange } from "@/lib/analytics";
+import { normalizeEnd, normalizeStart } from "@/lib/date";
 import { getRecommendations } from "@/lib/recommendations";
 import { getSessionUser } from "@/lib/session";
 
 const recommendationFiltersSchema = z.object({
-  period: z.enum(["day", "week", "month", "custom"]).optional(),
+  period: z.enum(["day", "week", "month", "custom", "all"]).optional(),
   from: z.coerce.date().optional(),
   to: z.coerce.date().optional(),
 });
@@ -46,7 +47,8 @@ export async function GET(request) {
   }
 
   const filters = parsedFilters.data;
-  const dateRange = buildDateRange({
+  const dateRange = await resolveAnalyticsDateRange({
+    userId: user.id,
     period: filters.period || "month",
     from: filters.from,
     to: filters.to,

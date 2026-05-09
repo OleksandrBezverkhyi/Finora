@@ -20,6 +20,7 @@ export default function DashboardOverview({ initialSummary, initialRecommendatio
       { value: "day", label: messages.periods.day },
       { value: "week", label: messages.periods.week },
       { value: "month", label: messages.periods.month },
+      { value: "all", label: messages.periods.all },
       { value: "custom", label: messages.periods.custom },
     ],
     [messages]
@@ -104,7 +105,7 @@ export default function DashboardOverview({ initialSummary, initialRecommendatio
   }
 
   async function shiftSelectedPeriod(direction) {
-    if (selectedPeriod === "custom") {
+    if (selectedPeriod === "custom" || selectedPeriod === "all") {
       return;
     }
 
@@ -181,6 +182,12 @@ export default function DashboardOverview({ initialSummary, initialRecommendatio
                   {isLoading ? messages.common.loading : messages.common.apply}
                 </button>
               </div>
+            ) : selectedPeriod === "all" ? (
+              <p className="text-sm text-[var(--muted)]">
+                {isLoading
+                  ? messages.dashboard.refreshing
+                  : formatPeriodLabel(summary.period, locale, messages)}
+              </p>
             ) : (
               <div className="flex items-center gap-2 text-sm text-[var(--muted)]">
                 <button
@@ -382,6 +389,10 @@ function SummaryCard({ label, value, hint }) {
 }
 
 function formatPeriodLabel(period, locale, messages) {
+  if (period.type === "all" && !period.from && !period.to) {
+    return messages.common.allTime;
+  }
+
   const from = period.from ? formatDateLocalized(period.from, locale) : messages.common.startBeginning;
   const to = period.to ? formatDateLocalized(period.to, locale) : messages.common.startNow;
   return `${from} - ${to}`;

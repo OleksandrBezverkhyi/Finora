@@ -33,6 +33,7 @@ export default function AnalyticsOverview({ initialTrend, initialByCategory, ini
       { value: "day", label: messages.periods.day },
       { value: "week", label: messages.periods.week },
       { value: "month", label: messages.periods.month },
+      { value: "all", label: messages.periods.all },
       { value: "custom", label: messages.periods.custom },
     ],
     [messages]
@@ -129,7 +130,7 @@ export default function AnalyticsOverview({ initialTrend, initialByCategory, ini
   }
 
   async function shiftSelectedPeriod(direction) {
-    if (selectedPeriod === "custom") {
+    if (selectedPeriod === "custom" || selectedPeriod === "all") {
       return;
     }
 
@@ -188,6 +189,12 @@ export default function AnalyticsOverview({ initialTrend, initialByCategory, ini
                   {isLoading ? messages.common.loading : messages.common.apply}
                 </button>
               </div>
+            ) : selectedPeriod === "all" ? (
+              <p className="text-sm text-[var(--muted)]">
+                {isLoading
+                  ? messages.analytics.refreshing
+                  : formatRangeLabel(trend.period, locale, dateFnsLocale, messages)}
+              </p>
             ) : (
               <div className="flex items-center gap-2 text-sm text-[var(--muted)]">
                 <button
@@ -454,6 +461,10 @@ function formatPercent(value, messages) {
 }
 
 function formatRangeLabel(period, locale, dateFnsLocale, messages) {
+  if (period.type === "all" && !period.from && !period.to) {
+    return messages.common.allTime;
+  }
+
   const from = period.from ? format(parseISO(period.from), "dd MMM yyyy", { locale: dateFnsLocale }) : messages.common.startBeginning;
   const to = period.to ? format(parseISO(period.to), "dd MMM yyyy", { locale: dateFnsLocale }) : messages.common.startNow;
   return from + " - " + to;
