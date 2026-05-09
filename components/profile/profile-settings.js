@@ -33,6 +33,8 @@ export default function ProfileSettings({ initialProfile }) {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [isResettingData, setIsResettingData] = useState(false);
   const [importFile, setImportFile] = useState(null);
   const [importSummary, setImportSummary] = useState(null);
   const [importPreview, setImportPreview] = useState([]);
@@ -182,6 +184,55 @@ export default function ProfileSettings({ initialProfile }) {
       setFormError(translateErrorMessage("Unexpected error. Please try again."));
     } finally {
       setIsSubmitting(false);
+    }
+  }
+
+  async function handleResetAccountData() {
+    setIsResettingData(true);
+    setFormError("");
+    setSuccessMessage("");
+
+    try {
+      const response = await fetch("/api/profile/reset", {
+        method: "POST",
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        setFormError(
+          translateErrorMessage(data.error || "Unable to clear account data right now.")
+        );
+        requestAnimationFrame(() => {
+          importSectionRef.current?.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+          });
+        });
+        return;
+      }
+
+      setShowResetModal(false);
+      setImportFile(null);
+      setImportSummary(null);
+      setImportPreview([]);
+      setImportMessage("");
+      setImportFormError("");
+      setShowImportResults(false);
+      setImportPreviewPage(1);
+      setSuccessMessage(
+        translateErrorMessage(data.message || "All account data has been cleared.")
+      );
+      requestAnimationFrame(() => {
+        importSectionRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      });
+      router.refresh();
+    } catch {
+      setFormError(translateErrorMessage("Unexpected error. Please try again."));
+    } finally {
+      setIsResettingData(false);
     }
   }
 
@@ -574,6 +625,68 @@ export default function ProfileSettings({ initialProfile }) {
           </div>
         </div>
       </section>
+
+      <section className="glass-panel rounded-[1.75rem] border border-rose-200 bg-rose-50/70 p-6 sm:p-8">
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
+          <div className="space-y-3">
+            <p className="eyebrow text-rose-700">{messages.profile.dangerEyebrow}</p>
+            <h2 className="text-3xl font-semibold tracking-tight text-rose-950">
+              {messages.profile.dangerTitle}
+            </h2>
+            <p className="max-w-2xl text-sm leading-6 text-rose-900/80">
+              {messages.profile.dangerDescription}
+            </p>
+            <p className="text-sm font-medium text-rose-800">
+              {messages.profile.dangerWarning}
+            </p>
+          </div>
+
+          <div className="flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={() => setShowResetModal(true)}
+              className="rounded-full bg-rose-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-rose-700 hover:shadow-[0_14px_30px_rgba(225,29,72,0.22)]"
+            >
+              {messages.profile.dangerButton}
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {showResetModal ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 px-4 py-8">
+          <div className="w-full max-w-lg rounded-[1.75rem] border border-rose-200 bg-white p-6 shadow-[0_30px_80px_rgba(15,23,42,0.24)] sm:p-7">
+            <div className="space-y-3">
+              <p className="eyebrow text-rose-700">{messages.profile.dangerEyebrow}</p>
+              <h3 className="text-2xl font-semibold tracking-tight text-[var(--foreground)]">
+                {messages.profile.dangerModalTitle}
+              </h3>
+              <p className="text-sm leading-6 text-[var(--muted)]">
+                {messages.profile.dangerModalDescription}
+              </p>
+            </div>
+
+            <div className="mt-6 grid gap-3 sm:grid-cols-2">
+              <button
+                type="button"
+                onClick={() => setShowResetModal(false)}
+                disabled={isResettingData}
+                className="rounded-full border border-[var(--border)] bg-white px-5 py-3 text-sm font-semibold text-[var(--foreground)] transition hover:border-[var(--accent)] hover:text-[var(--accent-strong)] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {messages.profile.dangerModalCancel}
+              </button>
+              <button
+                type="button"
+                onClick={handleResetAccountData}
+                disabled={isResettingData}
+                className="rounded-full bg-rose-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-70"
+              >
+                {isResettingData ? messages.profile.clearing : messages.profile.dangerModalConfirm}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
