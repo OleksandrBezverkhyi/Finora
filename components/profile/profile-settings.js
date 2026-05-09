@@ -403,6 +403,11 @@ export default function ProfileSettings({ initialProfile }) {
                 onChange={handleImportFileChange}
                 className="w-full rounded-2xl border border-[var(--border)] bg-white px-4 py-3 text-sm text-[var(--foreground)] file:mr-4 file:rounded-full file:border-0 file:bg-[var(--accent-soft)] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-[var(--accent-strong)]"
               />
+              {importFile ? (
+                <p className="text-sm text-[var(--muted)]">
+                  {messages.importExport.importSelectedFile.replace("{name}", importFile.name)}
+                </p>
+              ) : null}
             </label>
 
             <div className="flex flex-wrap gap-3">
