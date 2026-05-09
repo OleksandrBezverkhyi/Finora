@@ -35,6 +35,7 @@ export default function ProfileSettings({ initialProfile }) {
   const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
   const [showResetModal, setShowResetModal] = useState(false);
   const [isResettingData, setIsResettingData] = useState(false);
+  const [showImportConfirmModal, setShowImportConfirmModal] = useState(false);
   const [importFile, setImportFile] = useState(null);
   const [importSummary, setImportSummary] = useState(null);
   const [importPreview, setImportPreview] = useState([]);
@@ -125,6 +126,19 @@ export default function ProfileSettings({ initialProfile }) {
     } finally {
       setLoading(false);
     }
+  }
+
+  function openImportConfirmModal() {
+    if (!importFile || isPreviewingImport || isImportingCsv) {
+      return;
+    }
+
+    setShowImportConfirmModal(true);
+  }
+
+  async function confirmCsvImport() {
+    setShowImportConfirmModal(false);
+    await submitCsvImport("import");
   }
 
   async function handleSubmit(event) {
@@ -454,11 +468,6 @@ export default function ProfileSettings({ initialProfile }) {
                 onChange={handleImportFileChange}
                 className="w-full rounded-2xl border border-[var(--border)] bg-white px-4 py-3 text-sm text-[var(--foreground)] file:mr-4 file:rounded-full file:border-0 file:bg-[var(--accent-soft)] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-[var(--accent-strong)]"
               />
-              {importFile ? (
-                <p className="text-sm text-[var(--muted)]">
-                  {messages.importExport.importSelectedFile.replace("{name}", importFile.name)}
-                </p>
-              ) : null}
             </label>
 
             <div className="flex flex-wrap gap-3">
@@ -466,7 +475,7 @@ export default function ProfileSettings({ initialProfile }) {
                 type="button"
                 onClick={() => submitCsvImport("preview")}
                 disabled={!importFile || isPreviewingImport || isImportingCsv}
-                className="rounded-full border border-[var(--accent)] bg-white px-5 py-3 text-sm font-semibold text-[var(--accent-strong)] transition hover:bg-[var(--accent-soft)] disabled:cursor-not-allowed disabled:opacity-70"
+                className="inline-flex min-w-[11.5rem] items-center justify-center rounded-full border border-[var(--accent)] bg-white px-5 py-3 text-sm font-semibold text-[var(--accent-strong)] transition hover:bg-[var(--accent-soft)] disabled:cursor-not-allowed disabled:opacity-70"
               >
                 {isPreviewingImport
                   ? messages.importExport.previewing
@@ -476,16 +485,16 @@ export default function ProfileSettings({ initialProfile }) {
                 <button
                   type="button"
                   onClick={hideImportPreview}
-                  className="rounded-full border border-[var(--border)] bg-white px-5 py-3 text-sm font-semibold text-[var(--foreground)] transition hover:border-[var(--accent)] hover:bg-[var(--accent-soft)] hover:text-[var(--accent-strong)]"
+                  className="inline-flex min-w-[11.5rem] items-center justify-center rounded-full border border-[var(--border)] bg-white px-5 py-3 text-sm font-semibold text-[var(--foreground)] transition hover:border-[var(--accent)] hover:bg-[var(--accent-soft)] hover:text-[var(--accent-strong)]"
                 >
                   {messages.importExport.hidePreviewButton}
                 </button>
               ) : null}
               <button
                 type="button"
-                onClick={() => submitCsvImport("import")}
+                onClick={openImportConfirmModal}
                 disabled={!importFile || isPreviewingImport || isImportingCsv}
-                className="rounded-full bg-[var(--accent)] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[var(--accent-strong)] disabled:cursor-not-allowed disabled:opacity-70"
+                className="inline-flex min-w-[11.5rem] items-center justify-center rounded-full bg-[var(--accent)] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[var(--accent-strong)] disabled:cursor-not-allowed disabled:opacity-70"
               >
                 {isImportingCsv
                   ? messages.importExport.importing
@@ -682,6 +691,43 @@ export default function ProfileSettings({ initialProfile }) {
                 className="rounded-full bg-rose-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-70"
               >
                 {isResettingData ? messages.profile.clearing : messages.profile.dangerModalConfirm}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {showImportConfirmModal ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 px-4 py-8">
+          <div className="w-full max-w-lg rounded-[1.75rem] border border-[var(--border)] bg-white p-6 shadow-[0_30px_80px_rgba(15,23,42,0.24)] sm:p-7">
+            <div className="space-y-3">
+              <p className="eyebrow">{messages.importExport.importEyebrow}</p>
+              <h3 className="text-2xl font-semibold tracking-tight text-[var(--foreground)]">
+                {messages.importExport.importConfirmTitle}
+              </h3>
+              <p className="text-sm leading-6 text-[var(--muted)]">
+                {messages.importExport.importConfirmDescription}
+              </p>
+            </div>
+
+            <div className="mt-6 grid gap-3 sm:grid-cols-2">
+              <button
+                type="button"
+                onClick={() => setShowImportConfirmModal(false)}
+                disabled={isImportingCsv}
+                className="rounded-full border border-[var(--border)] bg-white px-5 py-3 text-sm font-semibold text-[var(--foreground)] transition hover:border-[var(--accent)] hover:text-[var(--accent-strong)] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {messages.importExport.importConfirmCancel}
+              </button>
+              <button
+                type="button"
+                onClick={confirmCsvImport}
+                disabled={isImportingCsv}
+                className="rounded-full bg-[var(--accent)] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[var(--accent-strong)] disabled:cursor-not-allowed disabled:opacity-70"
+              >
+                {isImportingCsv
+                  ? messages.importExport.importing
+                  : messages.importExport.importConfirmAction}
               </button>
             </div>
           </div>
