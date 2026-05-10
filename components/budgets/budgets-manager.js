@@ -7,10 +7,22 @@ import { formatPlural, interpolate } from "@/lib/i18n";
 
 const initialErrors = { categoryId: [], amount: [], month: [], year: [] };
 
+function capitalizeMonthLabel(value) {
+  return value ? value.charAt(0).toUpperCase() + value.slice(1) : value;
+}
+
 export default function BudgetsManager({ initialBudgetData, initialCategories, initialMonth, initialYear }) {
   const { locale, currencySymbol, formatMoney, messages, translateErrorMessage } = useLocale();
   const monthOptions = useMemo(
-    () => Array.from({ length: 12 }, (_, index) => ({ value: index + 1, label: new Intl.DateTimeFormat(locale === "uk" ? "uk-UA" : "en-GB", { month: "long" }).format(new Date(2026, index, 1)) })),
+    () =>
+      Array.from({ length: 12 }, (_, index) => ({
+        value: index + 1,
+        label: capitalizeMonthLabel(
+          new Intl.DateTimeFormat(locale === "uk" ? "uk-UA" : "en-GB", {
+            month: "long",
+          }).format(new Date(2026, index, 1))
+        ),
+      })),
     [locale]
   );
   const [budgetData, setBudgetData] = useState(initialBudgetData);
@@ -152,11 +164,11 @@ export default function BudgetsManager({ initialBudgetData, initialCategories, i
               <p className="muted text-sm leading-6">{messages.budgets.periodDescription}</p>
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-2">
-              <select value={selectedMonth} onChange={(event) => handlePeriodChange(Number(event.target.value), selectedYear)} className="rounded-2xl border border-[var(--border)] bg-white px-4 py-3 text-base text-[var(--foreground)] outline-none transition focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-soft)]">
+            <div className="grid gap-3 sm:grid-cols-[minmax(13rem,1.45fr)_minmax(8rem,0.8fr)]">
+              <select value={selectedMonth} onChange={(event) => handlePeriodChange(Number(event.target.value), selectedYear)} className="min-w-[13rem] rounded-2xl border border-[var(--border)] bg-white px-4 py-3 text-base text-[var(--foreground)] outline-none transition focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-soft)]">
                 {monthOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
               </select>
-              <select value={selectedYear} onChange={(event) => handlePeriodChange(selectedMonth, Number(event.target.value))} className="rounded-2xl border border-[var(--border)] bg-white px-4 py-3 text-base text-[var(--foreground)] outline-none transition focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-soft)]">
+              <select value={selectedYear} onChange={(event) => handlePeriodChange(selectedMonth, Number(event.target.value))} className="min-w-[8rem] rounded-2xl border border-[var(--border)] bg-white px-4 py-3 text-base text-[var(--foreground)] outline-none transition focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-soft)]">
                 {yearOptions.map((year) => <option key={year} value={year}>{year}</option>)}
               </select>
             </div>
@@ -255,7 +267,7 @@ export default function BudgetsManager({ initialBudgetData, initialCategories, i
 
                   <div className="flex flex-col items-start gap-3 sm:items-end">
                     <span className={getStatusBadgeClass(budget.status)}>
-                      {budget.isOverLimit ? "Ліміт перевищено" : budget.isNearLimit ? messages.budgets.closeToLimit : messages.budgets.onTrack}
+                      {budget.isOverLimit ? messages.budgets.limitExceeded : budget.isNearLimit ? messages.budgets.closeToLimit : messages.budgets.onTrack}
                     </span>
                     <div className="flex gap-2">
                       <button type="button" onClick={() => handleEdit(budget)} className="rounded-full border border-[var(--border)] bg-white px-4 py-2 text-sm font-semibold text-[var(--foreground)] transition hover:border-[var(--accent)] hover:text-[var(--accent-strong)]">{messages.common.edit}</button>

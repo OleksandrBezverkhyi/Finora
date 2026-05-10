@@ -10,6 +10,7 @@ export default function SignOutButton({
   confirmDescription,
   cancelLabel,
   confirmLabel,
+  className = "",
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
@@ -27,7 +28,10 @@ export default function SignOutButton({
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="rounded-full border border-[var(--border)] bg-white px-4 py-2 text-sm font-semibold text-[var(--foreground)] transition hover:border-[var(--accent)] hover:bg-[var(--accent-soft)] hover:text-[var(--accent-strong)]"
+        className={
+          "rounded-full border border-[var(--border)] bg-white px-4 py-2 text-sm font-semibold text-[var(--foreground)] transition hover:border-[var(--accent)] hover:bg-[var(--accent-soft)] hover:text-[var(--accent-strong)] " +
+          className
+        }
       >
         {buttonLabel}
       </button>

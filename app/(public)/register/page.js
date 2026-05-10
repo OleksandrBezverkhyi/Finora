@@ -17,17 +17,29 @@ export default async function RegisterPage({ searchParams }) {
           </div>
 
           <div className="grid gap-4 sm:grid-cols-3">
-            <div className="rounded-2xl border border-white/16 bg-white/10 p-4">
-              <p className="text-xs uppercase tracking-[0.18em] text-white/60">{messages.register.profile}</p>
-              <p className="mt-3 text-2xl font-semibold">{messages.register.name}</p>
+            <div className="rounded-2xl border border-white/16 bg-white/10 p-4 text-center">
+              <p className="flex min-h-[2.25rem] items-start justify-center text-xs uppercase tracking-[0.18em] text-white/60">
+                {messages.register.profile}
+              </p>
+              <p className="mt-3 flex min-h-[3.5rem] items-start justify-center text-2xl font-semibold">
+                {messages.register.name}
+              </p>
             </div>
-            <div className="rounded-2xl border border-white/16 bg-white/10 p-4">
-              <p className="text-xs uppercase tracking-[0.18em] text-white/60">{messages.register.baseCurrency}</p>
-              <p className="mt-3 text-2xl font-semibold">{messages.register.hryvnia}</p>
+            <div className="rounded-2xl border border-white/16 bg-white/10 p-4 text-center">
+              <p className="flex min-h-[2.25rem] items-start justify-center text-xs uppercase tracking-[0.18em] text-white/60">
+                {messages.register.baseCurrency}
+              </p>
+              <p className="mt-3 flex min-h-[3.5rem] items-start justify-center text-2xl font-semibold">
+                {messages.register.hryvnia}
+              </p>
             </div>
-            <div className="rounded-2xl border border-white/16 bg-white/10 p-4">
-              <p className="text-xs uppercase tracking-[0.18em] text-white/60">{messages.register.security}</p>
-              <p className="mt-3 text-2xl font-semibold">{messages.register.hashed}</p>
+            <div className="rounded-2xl border border-white/16 bg-white/10 p-4 text-center">
+              <p className="flex min-h-[2.25rem] items-start justify-center text-xs uppercase tracking-[0.18em] text-white/60">
+                {messages.register.security}
+              </p>
+              <p className="mt-3 flex min-h-[3.5rem] items-start justify-center text-2xl font-semibold">
+                {messages.register.hashed}
+              </p>
             </div>
           </div>
         </div>

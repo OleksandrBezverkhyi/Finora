@@ -67,7 +67,7 @@ export default function LoginForm({
         <div className="rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
           {messages.localeName === "Українська"
             ? errorMessage === "Invalid email or password."
-              ? "Невірний email або пароль."
+              ? "Неправильний email або пароль."
               : "Зараз не вдалося увійти. Спробуйте ще раз."
             : errorMessage}
         </div>

@@ -19,6 +19,7 @@ export default function ProfileSettings({ initialProfile, signOutAction }) {
   const router = useRouter();
   const { messages, translateErrorMessage, setCurrency } = useLocale();
   const importSectionRef = useRef(null);
+  const profileActionButtonClass = "inline-flex w-full items-center justify-center rounded-full px-5 py-3 text-sm font-semibold";
   const [formData, setFormData] = useState({
     name: initialProfile.name,
     email: initialProfile.email,
@@ -471,36 +472,44 @@ export default function ProfileSettings({ initialProfile, signOutAction }) {
               />
             </label>
 
-            <div className="flex flex-wrap gap-3">
-              <button
-                type="button"
-                onClick={() => submitCsvImport("preview")}
-                disabled={!importFile || isPreviewingImport || isImportingCsv}
-                className="inline-flex min-w-[11.5rem] items-center justify-center rounded-full border border-[var(--accent)] bg-white px-5 py-3 text-sm font-semibold text-[var(--accent-strong)] transition hover:bg-[var(--accent-soft)] disabled:cursor-not-allowed disabled:opacity-70"
-              >
-                {isPreviewingImport
-                  ? messages.importExport.previewing
-                  : messages.importExport.previewButton}
-              </button>
-              {showImportResults ? (
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="w-full sm:w-[11.5rem]">
                 <button
                   type="button"
-                  onClick={hideImportPreview}
-                  className="inline-flex min-w-[11.5rem] items-center justify-center rounded-full border border-[var(--border)] bg-white px-5 py-3 text-sm font-semibold text-[var(--foreground)] transition hover:border-[var(--accent)] hover:bg-[var(--accent-soft)] hover:text-[var(--accent-strong)]"
+                  onClick={() => submitCsvImport("preview")}
+                  disabled={!importFile || isPreviewingImport || isImportingCsv}
+                  className="inline-flex w-full items-center justify-center rounded-full border border-[var(--accent)] bg-white px-5 py-3 text-sm font-semibold text-[var(--accent-strong)] transition hover:bg-[var(--accent-soft)] disabled:cursor-not-allowed disabled:opacity-70"
                 >
-                  {messages.importExport.hidePreviewButton}
+                  {isPreviewingImport
+                    ? messages.importExport.previewing
+                    : messages.importExport.previewButton}
                 </button>
-              ) : null}
-              <button
-                type="button"
-                onClick={openImportConfirmModal}
-                disabled={!importFile || isPreviewingImport || isImportingCsv}
-                className="inline-flex min-w-[11.5rem] items-center justify-center rounded-full bg-[var(--accent)] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[var(--accent-strong)] disabled:cursor-not-allowed disabled:opacity-70"
-              >
-                {isImportingCsv
-                  ? messages.importExport.importing
-                  : messages.importExport.importButton}
-              </button>
+              </div>
+              <div className="w-full sm:w-[11.5rem]">
+                {showImportResults ? (
+                  <button
+                    type="button"
+                    onClick={hideImportPreview}
+                    className="inline-flex w-full items-center justify-center rounded-full border border-[var(--border)] bg-white px-5 py-3 text-sm font-semibold text-[var(--foreground)] transition hover:border-[var(--accent)] hover:bg-[var(--accent-soft)] hover:text-[var(--accent-strong)]"
+                  >
+                    {messages.importExport.hidePreviewButton}
+                  </button>
+                ) : (
+                  <div className="hidden h-[48px] sm:block" aria-hidden="true" />
+                )}
+              </div>
+              <div className="w-full sm:w-[11.5rem]">
+                <button
+                  type="button"
+                  onClick={openImportConfirmModal}
+                  disabled={!importFile || isPreviewingImport || isImportingCsv}
+                  className="inline-flex w-full items-center justify-center rounded-full bg-[var(--accent)] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[var(--accent-strong)] disabled:cursor-not-allowed disabled:opacity-70"
+                >
+                  {isImportingCsv
+                    ? messages.importExport.importing
+                    : messages.importExport.importButton}
+                </button>
+              </div>
             </div>
 
             {importFormError ? (
@@ -626,12 +635,14 @@ export default function ProfileSettings({ initialProfile, signOutAction }) {
           </div>
 
           <div className="flex flex-wrap gap-3">
-            <a
-              href="/api/export/csv"
-              className="inline-flex items-center justify-center rounded-full bg-[var(--accent)] px-5 py-3 text-sm font-semibold !text-white transition hover:bg-[var(--accent-strong)] hover:!text-white focus:!text-white visited:!text-white"
-            >
-              {messages.importExport.exportButton}
-            </a>
+            <div className="w-full sm:w-[11.5rem]">
+              <a
+                href="/api/export/csv"
+                className={`${profileActionButtonClass} bg-[var(--accent)] !text-white transition hover:bg-[var(--accent-strong)] hover:!text-white focus:!text-white visited:!text-white`}
+              >
+                {messages.importExport.exportButton}
+              </a>
+            </div>
           </div>
         </div>
       </section>
@@ -649,14 +660,17 @@ export default function ProfileSettings({ initialProfile, signOutAction }) {
           </div>
 
           <div className="flex flex-wrap gap-3">
-            <SignOutButton
-              action={signOutAction}
-              buttonLabel={messages.common.signOut}
-              confirmTitle={messages.common.signOutConfirmTitle}
-              confirmDescription={messages.common.signOutConfirmDescription}
-              cancelLabel={messages.common.signOutConfirmCancel}
-              confirmLabel={messages.common.signOutConfirmAction}
-            />
+            <div className="w-full sm:w-[11.5rem]">
+              <SignOutButton
+                action={signOutAction}
+                buttonLabel={messages.common.signOut}
+                confirmTitle={messages.common.signOutConfirmTitle}
+                confirmDescription={messages.common.signOutConfirmDescription}
+                cancelLabel={messages.common.signOutConfirmCancel}
+                confirmLabel={messages.common.signOutConfirmAction}
+                className={`${profileActionButtonClass} w-full`}
+              />
+            </div>
           </div>
         </div>
       </section>
@@ -677,13 +691,15 @@ export default function ProfileSettings({ initialProfile, signOutAction }) {
           </div>
 
           <div className="flex flex-wrap gap-3">
-            <button
-              type="button"
-              onClick={() => setShowResetModal(true)}
-              className="rounded-full bg-rose-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-rose-700 hover:shadow-[0_14px_30px_rgba(225,29,72,0.22)]"
-            >
-              {messages.profile.dangerButton}
-            </button>
+            <div className="w-full sm:w-[11.5rem]">
+              <button
+                type="button"
+                onClick={() => setShowResetModal(true)}
+                className={`${profileActionButtonClass} bg-rose-600 text-white transition hover:bg-rose-700 hover:shadow-[0_14px_30px_rgba(225,29,72,0.22)]`}
+              >
+                {messages.profile.dangerButton}
+              </button>
+            </div>
           </div>
         </div>
       </section>

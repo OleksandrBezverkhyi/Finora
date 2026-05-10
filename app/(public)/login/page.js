@@ -52,15 +52,15 @@ export default async function LoginPage({ searchParams }) {
           </div>
 
           <div className="grid gap-4 sm:grid-cols-3">
-            <div className="rounded-2xl border border-white/16 bg-white/10 p-4">
+            <div className="rounded-2xl border border-white/16 bg-white/10 p-4 text-center">
               <p className="text-xs uppercase tracking-[0.18em] text-white/60">{messages.login.cardOverview}</p>
               <p className="mt-3 text-2xl font-semibold">{messages.login.cardIncome}</p>
             </div>
-            <div className="rounded-2xl border border-white/16 bg-white/10 p-4">
+            <div className="rounded-2xl border border-white/16 bg-white/10 p-4 text-center">
               <p className="text-xs uppercase tracking-[0.18em] text-white/60">{messages.login.cardPlanning}</p>
               <p className="mt-3 text-2xl font-semibold">{messages.login.cardBudget}</p>
             </div>
-            <div className="rounded-2xl border border-white/16 bg-white/10 p-4">
+            <div className="rounded-2xl border border-white/16 bg-white/10 p-4 text-center">
               <p className="text-xs uppercase tracking-[0.18em] text-white/60">{messages.login.cardControl}</p>
               <p className="mt-3 text-2xl font-semibold">{messages.login.cardBalance}</p>
             </div>
