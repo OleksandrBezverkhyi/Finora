@@ -18,7 +18,7 @@ const geistMono = Geist_Mono({
 
 export const metadata = {
   title: "Finora",
-  description: "Personal finance tracker with analytics and budgeting",
+  description: "Personal finance tracker for spending, budgets, goals, and analytics",
 };
 
 export default async function RootLayout({ children }) {

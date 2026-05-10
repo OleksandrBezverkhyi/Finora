@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 
+import SignOutButton from "@/components/common/sign-out-button";
 import { useLocale } from "@/components/common/locale-provider";
 
 const initialErrors = {
@@ -14,10 +15,11 @@ const initialErrors = {
 };
 const previewPageSize = 5;
 
-export default function ProfileSettings({ initialProfile }) {
+export default function ProfileSettings({ initialProfile, signOutAction }) {
   const router = useRouter();
   const { messages, translateErrorMessage, setCurrency } = useLocale();
   const importSectionRef = useRef(null);
+  const profileActionButtonClass = "inline-flex w-full items-center justify-center rounded-full px-5 py-3 text-sm font-semibold";
   const [formData, setFormData] = useState({
     name: initialProfile.name,
     email: initialProfile.email,
@@ -33,6 +35,9 @@ export default function ProfileSettings({ initialProfile }) {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [isResettingData, setIsResettingData] = useState(false);
+  const [showImportConfirmModal, setShowImportConfirmModal] = useState(false);
   const [importFile, setImportFile] = useState(null);
   const [importSummary, setImportSummary] = useState(null);
   const [importPreview, setImportPreview] = useState([]);
@@ -125,6 +130,19 @@ export default function ProfileSettings({ initialProfile }) {
     }
   }
 
+  function openImportConfirmModal() {
+    if (!importFile || isPreviewingImport || isImportingCsv) {
+      return;
+    }
+
+    setShowImportConfirmModal(true);
+  }
+
+  async function confirmCsvImport() {
+    setShowImportConfirmModal(false);
+    await submitCsvImport("import");
+  }
+
   async function handleSubmit(event) {
     event.preventDefault();
     setIsSubmitting(true);
@@ -182,6 +200,55 @@ export default function ProfileSettings({ initialProfile }) {
       setFormError(translateErrorMessage("Unexpected error. Please try again."));
     } finally {
       setIsSubmitting(false);
+    }
+  }
+
+  async function handleResetAccountData() {
+    setIsResettingData(true);
+    setFormError("");
+    setSuccessMessage("");
+
+    try {
+      const response = await fetch("/api/profile/reset", {
+        method: "POST",
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        setFormError(
+          translateErrorMessage(data.error || "Unable to clear account data right now.")
+        );
+        requestAnimationFrame(() => {
+          importSectionRef.current?.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+          });
+        });
+        return;
+      }
+
+      setShowResetModal(false);
+      setImportFile(null);
+      setImportSummary(null);
+      setImportPreview([]);
+      setImportMessage("");
+      setImportFormError("");
+      setShowImportResults(false);
+      setImportPreviewPage(1);
+      setSuccessMessage(
+        translateErrorMessage(data.message || "All account data has been cleared.")
+      );
+      requestAnimationFrame(() => {
+        importSectionRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      });
+      router.refresh();
+    } catch {
+      setFormError(translateErrorMessage("Unexpected error. Please try again."));
+    } finally {
+      setIsResettingData(false);
     }
   }
 
@@ -403,43 +470,46 @@ export default function ProfileSettings({ initialProfile }) {
                 onChange={handleImportFileChange}
                 className="w-full rounded-2xl border border-[var(--border)] bg-white px-4 py-3 text-sm text-[var(--foreground)] file:mr-4 file:rounded-full file:border-0 file:bg-[var(--accent-soft)] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-[var(--accent-strong)]"
               />
-              {importFile ? (
-                <p className="text-sm text-[var(--muted)]">
-                  {messages.importExport.importSelectedFile.replace("{name}", importFile.name)}
-                </p>
-              ) : null}
             </label>
 
-            <div className="flex flex-wrap gap-3">
-              <button
-                type="button"
-                onClick={() => submitCsvImport("preview")}
-                disabled={!importFile || isPreviewingImport || isImportingCsv}
-                className="rounded-full border border-[var(--accent)] bg-white px-5 py-3 text-sm font-semibold text-[var(--accent-strong)] transition hover:bg-[var(--accent-soft)] disabled:cursor-not-allowed disabled:opacity-70"
-              >
-                {isPreviewingImport
-                  ? messages.importExport.previewing
-                  : messages.importExport.previewButton}
-              </button>
-              {showImportResults ? (
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="w-full sm:w-[11.5rem]">
                 <button
                   type="button"
-                  onClick={hideImportPreview}
-                  className="rounded-full border border-[var(--border)] bg-white px-5 py-3 text-sm font-semibold text-[var(--foreground)] transition hover:border-[var(--accent)] hover:bg-[var(--accent-soft)] hover:text-[var(--accent-strong)]"
+                  onClick={() => submitCsvImport("preview")}
+                  disabled={!importFile || isPreviewingImport || isImportingCsv}
+                  className="inline-flex w-full items-center justify-center rounded-full border border-[var(--accent)] bg-white px-5 py-3 text-sm font-semibold text-[var(--accent-strong)] transition hover:bg-[var(--accent-soft)] disabled:cursor-not-allowed disabled:opacity-70"
                 >
-                  {messages.importExport.hidePreviewButton}
+                  {isPreviewingImport
+                    ? messages.importExport.previewing
+                    : messages.importExport.previewButton}
                 </button>
-              ) : null}
-              <button
-                type="button"
-                onClick={() => submitCsvImport("import")}
-                disabled={!importFile || isPreviewingImport || isImportingCsv}
-                className="rounded-full bg-[var(--accent)] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[var(--accent-strong)] disabled:cursor-not-allowed disabled:opacity-70"
-              >
-                {isImportingCsv
-                  ? messages.importExport.importing
-                  : messages.importExport.importButton}
-              </button>
+              </div>
+              <div className="w-full sm:w-[11.5rem]">
+                {showImportResults ? (
+                  <button
+                    type="button"
+                    onClick={hideImportPreview}
+                    className="inline-flex w-full items-center justify-center rounded-full border border-[var(--border)] bg-white px-5 py-3 text-sm font-semibold text-[var(--foreground)] transition hover:border-[var(--accent)] hover:bg-[var(--accent-soft)] hover:text-[var(--accent-strong)]"
+                  >
+                    {messages.importExport.hidePreviewButton}
+                  </button>
+                ) : (
+                  <div className="hidden h-[48px] sm:block" aria-hidden="true" />
+                )}
+              </div>
+              <div className="w-full sm:w-[11.5rem]">
+                <button
+                  type="button"
+                  onClick={openImportConfirmModal}
+                  disabled={!importFile || isPreviewingImport || isImportingCsv}
+                  className="inline-flex w-full items-center justify-center rounded-full bg-[var(--accent)] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[var(--accent-strong)] disabled:cursor-not-allowed disabled:opacity-70"
+                >
+                  {isImportingCsv
+                    ? messages.importExport.importing
+                    : messages.importExport.importButton}
+                </button>
+              </div>
             </div>
 
             {importFormError ? (
@@ -565,15 +635,146 @@ export default function ProfileSettings({ initialProfile }) {
           </div>
 
           <div className="flex flex-wrap gap-3">
-            <a
-              href="/api/export/csv"
-              className="inline-flex items-center justify-center rounded-full bg-[var(--accent)] px-5 py-3 text-sm font-semibold !text-white transition hover:bg-[var(--accent-strong)] hover:!text-white focus:!text-white visited:!text-white"
-            >
-              {messages.importExport.exportButton}
-            </a>
+            <div className="w-full sm:w-[11.5rem]">
+              <a
+                href="/api/export/csv"
+                className={`${profileActionButtonClass} bg-[var(--accent)] !text-white transition hover:bg-[var(--accent-strong)] hover:!text-white focus:!text-white visited:!text-white`}
+              >
+                {messages.importExport.exportButton}
+              </a>
+            </div>
           </div>
         </div>
       </section>
+
+      <section className="glass-panel rounded-[1.75rem] p-6 sm:p-8">
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+          <div className="space-y-3">
+            <p className="eyebrow">{messages.common.signOut}</p>
+            <h2 className="text-3xl font-semibold tracking-tight text-[var(--foreground)]">
+              {messages.common.signOutConfirmTitle}
+            </h2>
+            <p className="muted max-w-2xl text-sm leading-6">
+              {messages.common.signOutConfirmDescription}
+            </p>
+          </div>
+
+          <div className="flex flex-wrap gap-3">
+            <div className="w-full sm:w-[11.5rem]">
+              <SignOutButton
+                action={signOutAction}
+                buttonLabel={messages.common.signOut}
+                confirmTitle={messages.common.signOutConfirmTitle}
+                confirmDescription={messages.common.signOutConfirmDescription}
+                cancelLabel={messages.common.signOutConfirmCancel}
+                confirmLabel={messages.common.signOutConfirmAction}
+                className={`${profileActionButtonClass} w-full`}
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="glass-panel rounded-[1.75rem] border border-rose-200 bg-rose-50/70 p-6 sm:p-8">
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
+          <div className="space-y-3">
+            <p className="eyebrow text-rose-700">{messages.profile.dangerEyebrow}</p>
+            <h2 className="text-3xl font-semibold tracking-tight text-rose-950">
+              {messages.profile.dangerTitle}
+            </h2>
+            <p className="max-w-2xl text-sm leading-6 text-rose-900/80">
+              {messages.profile.dangerDescription}
+            </p>
+            <p className="text-sm font-medium text-rose-800">
+              {messages.profile.dangerWarning}
+            </p>
+          </div>
+
+          <div className="flex flex-wrap gap-3">
+            <div className="w-full sm:w-[11.5rem]">
+              <button
+                type="button"
+                onClick={() => setShowResetModal(true)}
+                className={`${profileActionButtonClass} bg-rose-600 text-white transition hover:bg-rose-700 hover:shadow-[0_14px_30px_rgba(225,29,72,0.22)]`}
+              >
+                {messages.profile.dangerButton}
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {showResetModal ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 px-4 py-8">
+          <div className="w-full max-w-lg rounded-[1.75rem] border border-rose-200 bg-white p-6 shadow-[0_30px_80px_rgba(15,23,42,0.24)] sm:p-7">
+            <div className="space-y-3">
+              <p className="eyebrow text-rose-700">{messages.profile.dangerEyebrow}</p>
+              <h3 className="text-2xl font-semibold tracking-tight text-[var(--foreground)]">
+                {messages.profile.dangerModalTitle}
+              </h3>
+              <p className="text-sm leading-6 text-[var(--muted)]">
+                {messages.profile.dangerModalDescription}
+              </p>
+            </div>
+
+            <div className="mt-6 grid gap-3 sm:grid-cols-2">
+              <button
+                type="button"
+                onClick={() => setShowResetModal(false)}
+                disabled={isResettingData}
+                className="rounded-full border border-[var(--border)] bg-white px-5 py-3 text-sm font-semibold text-[var(--foreground)] transition hover:border-[var(--accent)] hover:text-[var(--accent-strong)] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {messages.profile.dangerModalCancel}
+              </button>
+              <button
+                type="button"
+                onClick={handleResetAccountData}
+                disabled={isResettingData}
+                className="rounded-full bg-rose-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-70"
+              >
+                {isResettingData ? messages.profile.clearing : messages.profile.dangerModalConfirm}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {showImportConfirmModal ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 px-4 py-8">
+          <div className="w-full max-w-lg rounded-[1.75rem] border border-[var(--border)] bg-white p-6 shadow-[0_30px_80px_rgba(15,23,42,0.24)] sm:p-7">
+            <div className="space-y-3">
+              <p className="eyebrow">{messages.importExport.importEyebrow}</p>
+              <h3 className="text-2xl font-semibold tracking-tight text-[var(--foreground)]">
+                {messages.importExport.importConfirmTitle}
+              </h3>
+              <p className="text-sm leading-6 text-[var(--muted)]">
+                {messages.importExport.importConfirmDescription}
+              </p>
+            </div>
+
+            <div className="mt-6 grid gap-3 sm:grid-cols-2">
+              <button
+                type="button"
+                onClick={() => setShowImportConfirmModal(false)}
+                disabled={isImportingCsv}
+                className="rounded-full border border-[var(--border)] bg-white px-5 py-3 text-sm font-semibold text-[var(--foreground)] transition hover:border-[var(--accent)] hover:text-[var(--accent-strong)] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {messages.importExport.importConfirmCancel}
+              </button>
+              <button
+                type="button"
+                onClick={confirmCsvImport}
+                disabled={isImportingCsv}
+                className="rounded-full bg-[var(--accent)] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[var(--accent-strong)] disabled:cursor-not-allowed disabled:opacity-70"
+              >
+                {isImportingCsv
+                  ? messages.importExport.importing
+                  : messages.importExport.importConfirmAction}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

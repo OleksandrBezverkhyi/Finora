@@ -2,27 +2,21 @@ import Link from "next/link";
 
 import Container from "@/components/common/container";
 import LocaleSwitcher from "@/components/common/locale-switcher";
-import { signOut } from "@/lib/auth";
+import NavLinks from "@/components/common/nav-links";
 import { getServerMessages } from "@/lib/server-locale";
 import { getSessionUser } from "@/lib/session";
-
-async function handleSignOut() {
-  "use server";
-
-  await signOut({ redirectTo: "/login" });
-}
 
 export default async function AppShell({ children }) {
   const user = await getSessionUser();
   const messages = await getServerMessages();
   const navItems = [
-    { href: "/dashboard", label: messages.nav.dashboard, active: true },
-    { href: "/transactions", label: messages.nav.transactions, active: true },
-    { href: "/categories", label: messages.nav.categories, active: true },
-    { href: "/analytics", label: messages.nav.analytics, active: true },
-    { href: "/budgets", label: messages.nav.budgets, active: true },
-    { href: "/goals", label: messages.nav.goals, active: true },
-    { href: "/profile", label: messages.nav.profile, active: true },
+    { href: "/dashboard", label: messages.nav.dashboard },
+    { href: "/transactions", label: messages.nav.transactions },
+    { href: "/categories", label: messages.nav.categories },
+    { href: "/analytics", label: messages.nav.analytics },
+    { href: "/budgets", label: messages.nav.budgets },
+    { href: "/goals", label: messages.nav.goals },
+    { href: "/profile", label: messages.nav.profile },
   ];
 
   return (
@@ -44,35 +38,7 @@ export default async function AppShell({ children }) {
 
             <div className="flex flex-col gap-3 lg:items-end">
               <LocaleSwitcher />
-              <nav className="flex flex-wrap gap-2">
-                {navItems.map((item) =>
-                  item.active ? (
-                    <Link
-                      key={item.label}
-                      href={item.href}
-                      className="rounded-full border border-[var(--accent)] bg-[var(--accent-soft)] px-4 py-2 text-sm font-medium text-[var(--accent-strong)] transition hover:bg-[var(--accent)] hover:text-white"
-                    >
-                      {item.label}
-                    </Link>
-                  ) : (
-                    <span
-                      key={item.label}
-                      className="rounded-full border border-[var(--border)] bg-white/55 px-4 py-2 text-sm font-medium text-[var(--muted)]"
-                    >
-                      {item.label}
-                    </span>
-                  )
-                )}
-              </nav>
-
-              <form action={handleSignOut}>
-                <button
-                  type="submit"
-                  className="rounded-full border border-[var(--border)] bg-white px-4 py-2 text-sm font-semibold text-[var(--foreground)] transition hover:border-[var(--accent)] hover:bg-[var(--accent-soft)] hover:text-[var(--accent-strong)]"
-                >
-                  {messages.common.signOut}
-                </button>
-              </form>
+              <NavLinks items={navItems} />
             </div>
           </div>
         </header>
