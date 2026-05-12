@@ -547,12 +547,12 @@ export default function ProfileSettings({ initialProfile, signOutAction }) {
                     {importPreview.length ? (
                       paginatedPreview.map((row) => (
                         <div
-                          key={`${row.rowNumber}-${row.category}-${row.amount}`}
+                          key={`${row.previewNumber || row.rowNumber}-${row.category}-${row.amount}`}
                           className="rounded-2xl border border-[var(--border)] bg-white px-4 py-3 text-sm"
                         >
                           <div className="flex items-center justify-between gap-4">
                             <p className="font-semibold text-[var(--foreground)]">
-                              #{row.rowNumber} · {row.category}
+                              #{row.previewNumber || row.rowNumber} · {row.category}
                             </p>
                             <span className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted)]">
                               {getPreviewStatusLabel(row.status)}

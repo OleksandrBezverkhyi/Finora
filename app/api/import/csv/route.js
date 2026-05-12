@@ -223,6 +223,7 @@ export async function POST(request) {
     if (rowIssues.length) {
       errors.push({ rowNumber, messages: rowIssues });
       preview.push({
+        previewNumber: preview.length + 1,
         rowNumber,
         type: rawRow.type || "",
         category: categoryName,
@@ -247,6 +248,7 @@ export async function POST(request) {
       const messages = parsedRow.error.issues.map((issue) => issue.message);
       errors.push({ rowNumber, messages });
       preview.push({
+        previewNumber: preview.length + 1,
         rowNumber,
         type: normalizedType,
         category: categoryName,
@@ -285,6 +287,7 @@ export async function POST(request) {
     });
 
     preview.push({
+      previewNumber: preview.length + 1,
       rowNumber,
       type: normalizedType,
       category: categoryName,
